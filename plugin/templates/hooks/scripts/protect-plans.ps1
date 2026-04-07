@@ -86,7 +86,7 @@ try {
                 if ($oldStripped -ne $newStripped) {
                     # Structural change detected in FINAL section
                     $decision = "deny"
-                    $reason = "WARNING: Edit affects the Final-Tasklist of a plan. Its content MUST NOT be changed structurally. Only checkmarks ([ ] to [x]) may be set. | WARNUNG: Edit betrifft die Final-Tasklist eines Plans. Nur Checkmarks duerfen gesetzt werden."
+                    $reason = "WARNING: Edit affects the Final-Tasklist of a plan. Its content MUST NOT be changed structurally. Only checkmarks ([ ] to [x]) may be set."
                 } else {
                     # Only checkmark change — allow but warn
                     $decision = "allow"

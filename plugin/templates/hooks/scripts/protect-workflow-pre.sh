@@ -123,11 +123,7 @@ try:
                 '- NEVER batch-check multiple items in one edit\n'
                 '- NEVER use multi_replace to mark multiple checkmarks at once\n'
                 '- NEVER group completions\n\n'
-                f'Go back and make {total_new_checks} SEPARATE edits, each changing exactly ONE checkbox from [ ] to [x].\n\n'
-                '--- DEUTSCH ---\n'
-                f'VERSTOSS #{vn} gegen execute_plan.instructions.md!\n'
-                f'Du hast versucht {total_new_checks} Checkmarks in EINEM Edit zu setzen. Das ist STRENG VERBOTEN.\n'
-                f'Mache {total_new_checks} EINZELNE Edits, jeder aendert genau EINE Checkbox von [ ] zu [x].'
+                f'Go back and make {total_new_checks} SEPARATE edits, each changing exactly ONE checkbox from [ ] to [x].'
             )
 
         # REJECT: Task deletion
@@ -137,10 +133,7 @@ try:
             reason = (
                 f'VIOLATION #{vn} of execute_plan.instructions.md!\n'
                 f'You attempted to REMOVE {total_tasks_removed} unchecked task(s) from a plan file. This is STRICTLY FORBIDDEN.\n\n'
-                'Plan tasks MUST NOT be deleted or skipped. Every task must be completed and checked off individually.\n\n'
-                '--- DEUTSCH ---\n'
-                f'VERSTOSS #{vn} gegen execute_plan.instructions.md!\n'
-                f'Du hast versucht {total_tasks_removed} unerledigte Aufgabe(n) aus dem Plan zu entfernen. Das ist STRENG VERBOTEN.'
+                'Plan tasks MUST NOT be deleted or skipped. Every task must be completed and checked off individually.'
             )
 except:
     decision = 'allow'

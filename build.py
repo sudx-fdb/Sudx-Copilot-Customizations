@@ -5,30 +5,30 @@ Handles semantic versioning (Fix/NewFunction/MayjorUpdate), VSIX packaging,
 and version history management for the Sudx Copilot Customizations VS Code extension.
 
 Build structure:
-    .builds/{version}-{name}-{tag}-sudxai.vsix      Aktuelle VSIX (immer nur eine)
-    .builds/versions/{version}-{name}-{tag}-sudxai.vsix  Archivierte fruehere Versionen
-    .builds/versions.json                            Versionshistorie und Metadaten
+    .builds/{version}-{name}-sudxai.vsix             Current VSIX (only one at a time)
+    .builds/versions/{version}-{name}-sudxai.vsix    Archived previous versions
+    .builds/versions.json                            Version history and metadata
 
 Versioning:
     Fix                    +0.0.1   (Patch)
     NewFunction            +0.1.0   (Minor, patch reset)
-    UserapprovedBigBump    +1.0.0   (Major, minor+patch reset, nur mit --allow-bigbump)
+    UserapprovedBigBump    +1.0.0   (Major, minor+patch reset, requires --allow-bigbump)
 
-Release Tags (Pflicht, eines von beiden):
+Release Tags (required, one of two):
     -Normal                Unstable Release (prerelease)
     -UserapprovedStable    Stable Release
 
 Total-Version:
-    Kumuliert alle Inkremente ohne Reset.
-    Fix +0.0.1 | NewFunction +0.1.0 (patch bleibt) | UserapprovedBigBump +1.0.0 (minor+patch bleiben)
+    Accumulates all increments without reset.
+    Fix +0.0.1 | NewFunction +0.1.0 (patch stays) | UserapprovedBigBump +1.0.0 (minor+patch stay)
 
-Build-Nummer:
+Build Number:
     {version}.{totalversion}.{HH.MM.DD:MM:YYYY}-{name}
 
-Kommentar-Prefixe (Pflicht):
-    FIX:   Reparatur oder Anpassung einer bestehenden Funktion
-    NEU:   Neue Funktionalitaet fuer Nutzer
-    REM:   Entfernung oder groessere Restrukturierung
+Comment Prefixes (required):
+    FIX:   Repair or adjustment of an existing function
+    NEU:   New functionality for users
+    REM:   Removal or major restructuring
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ from pathlib import Path
 
 
 # ---------------------------------------------------------------------------
-#  Terminal-Farben (Windows-kompatibel ueber ANSI falls unterstuetzt)
+#  Terminal colors (Windows-compatible via ANSI if supported)
 # ---------------------------------------------------------------------------
 
 class _Colors:
@@ -100,11 +100,11 @@ def _print_success(text: str) -> None:
 
 
 def _print_error(text: str) -> None:
-    print(f"{C.RED}{C.BOLD}[FEHLER]{C.RESET} {text}", file=sys.stderr)
+    print(f"{C.RED}{C.BOLD}[ERROR]{C.RESET} {text}", file=sys.stderr)
 
 
 def _print_warn(text: str) -> None:
-    print(f"{C.YELLOW}{C.BOLD}[WARNUNG]{C.RESET} {text}", file=sys.stderr)
+    print(f"{C.YELLOW}{C.BOLD}[WARNING]{C.RESET} {text}", file=sys.stderr)
 
 
 def _print_info(label: str, value: str) -> None:
@@ -133,13 +133,13 @@ class Version:
     def from_string(cls, version_str: str) -> Version:
         m = cls.VERSION_RE.match(version_str.strip())
         if not m:
-            raise ValueError(f"Ungueltiges Versionsformat: '{version_str}'. Erwartet: X.Y.Z")
+            raise ValueError(f"Invalid version format: '{version_str}'. Expected: X.Y.Z")
         return cls(int(m.group(1)), int(m.group(2)), int(m.group(3)))
 
     def __str__(self) -> str:
         return f"{self.major}.{self.minor}.{self.patch}"
 
-    # -- version (mit reset) ------------------------------------------------
+    # -- version (with reset) -----------------------------------------------
 
     def increment_fix(self) -> Version:
         """Fix: +0.0.1"""
@@ -153,23 +153,23 @@ class Version:
         """UserapprovedBigBump: +1.0.0 (minor+patch reset)"""
         return Version(self.major + 1, 0, 0)
 
-    # -- total-version (ohne reset) -----------------------------------------
+    # -- total-version (no reset) -------------------------------------------
 
     def total_increment_fix(self) -> Version:
         """Total Fix: +0.0.1"""
         return Version(self.major, self.minor, self.patch + 1)
 
     def total_increment_newfunction(self) -> Version:
-        """Total NewFunction: +0.1.0 (patch bleibt)"""
+        """Total NewFunction: +0.1.0 (patch stays)"""
         return Version(self.major, self.minor + 1, self.patch)
 
     def total_increment_bigbump(self) -> Version:
-        """Total UserapprovedBigBump: +1.0.0 (minor+patch bleiben)"""
+        """Total UserapprovedBigBump: +1.0.0 (minor+patch stay)"""
         return Version(self.major + 1, self.minor, self.patch)
 
 
 # ---------------------------------------------------------------------------
-#  Kommentar-Validierung
+#  Comment Validation
 # ---------------------------------------------------------------------------
 
 VALID_COMMENT_PREFIXES = ("FIX:", "NEU:", "REM:")
@@ -181,9 +181,9 @@ COMMENT_PREFIX_FOR_TYPE: dict[str, str] = {
 }
 
 COMMENT_PREFIX_DESCRIPTIONS: dict[str, str] = {
-    "FIX:": "Reparatur oder Anpassung einer bestehenden Funktion",
-    "NEU:": "Neue Funktionalitaet fuer Nutzer",
-    "REM:": "Entfernung oder groessere Restrukturierung",
+    "FIX:": "Repair or adjustment of an existing function",
+    "NEU:": "New functionality for users",
+    "REM:": "Removal or major restructuring",
 }
 
 
@@ -194,10 +194,10 @@ def validate_comment(comment: str, change_type: str) -> tuple[bool, str]:
     """
     if not comment or not comment.strip():
         return False, (
-            "Kommentar darf nicht leer sein.\n"
-            f"  Pflicht-Prefix fuer {change_type}: {COMMENT_PREFIX_FOR_TYPE[change_type]}\n"
-            f"  Erlaubte Prefixe: {', '.join(VALID_COMMENT_PREFIXES)}\n"
-            f"  Beispiel: \"{COMMENT_PREFIX_FOR_TYPE[change_type]} Kurzbeschreibung der Aenderung\""
+            "Comment must not be empty.\n"
+            f"  Required prefix for {change_type}: {COMMENT_PREFIX_FOR_TYPE[change_type]}\n"
+            f"  Allowed prefixes: {', '.join(VALID_COMMENT_PREFIXES)}\n"
+            f"  Example: \"{COMMENT_PREFIX_FOR_TYPE[change_type]} Brief description of the change\""
         )
 
     comment = comment.strip()
@@ -210,24 +210,24 @@ def validate_comment(comment: str, change_type: str) -> tuple[bool, str]:
 
     if matched_prefix is None:
         return False, (
-            f"Kommentar muss mit einem gueltigen Prefix beginnen.\n"
-            f"  Erhalten:  \"{comment}\"\n"
-            f"  Erwartet:  {COMMENT_PREFIX_FOR_TYPE[change_type]} <Beschreibung>\n"
-            f"  Erlaubt:   {', '.join(f'{p} ({d})' for p, d in COMMENT_PREFIX_DESCRIPTIONS.items())}"
+            f"Comment must begin with a valid prefix.\n"
+            f"  Received:  \"{comment}\"\n"
+            f"  Expected:  {COMMENT_PREFIX_FOR_TYPE[change_type]} <description>\n"
+            f"  Allowed:   {', '.join(f'{p} ({d})' for p, d in COMMENT_PREFIX_DESCRIPTIONS.items())}"
         )
 
     body = comment[len(matched_prefix):].strip()
     if not body:
         return False, (
-            f"Nach dem Prefix '{matched_prefix}' muss eine Beschreibung folgen.\n"
-            f"  Beispiel: \"{matched_prefix} Kurzbeschreibung der Aenderung\""
+            f"A description must follow after the prefix '{matched_prefix}'.\n"
+            f"  Example: \"{matched_prefix} Brief description of the change\""
         )
 
     expected = COMMENT_PREFIX_FOR_TYPE.get(change_type, "")
     if matched_prefix != expected:
         _print_warn(
-            f"Empfohlenes Prefix fuer {change_type} ist '{expected}', "
-            f"verwendet wird '{matched_prefix}'."
+            f"Recommended prefix for {change_type} is '{expected}', "
+            f"using '{matched_prefix}'."
         )
 
     cleaned = f"{matched_prefix} {body}"
@@ -235,7 +235,7 @@ def validate_comment(comment: str, change_type: str) -> tuple[bool, str]:
 
 
 # ---------------------------------------------------------------------------
-#  Name-Validierung
+#  Name Validation
 # ---------------------------------------------------------------------------
 
 NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_-]*$")
@@ -246,30 +246,30 @@ NAME_MAX_LEN = 32
 def validate_name(name: str) -> tuple[bool, str]:
     """Validate version name (must be single unique word, alpha-start)."""
     if not name or not name.strip():
-        return False, "Versionsname darf nicht leer sein."
+        return False, "Version name must not be empty."
 
     name = name.strip()
 
     if len(name) < NAME_MIN_LEN:
-        return False, f"Versionsname muss mindestens {NAME_MIN_LEN} Zeichen haben (erhalten: {len(name)})."
+        return False, f"Version name must have at least {NAME_MIN_LEN} characters (received: {len(name)})."
 
     if len(name) > NAME_MAX_LEN:
-        return False, f"Versionsname darf maximal {NAME_MAX_LEN} Zeichen haben (erhalten: {len(name)})."
+        return False, f"Version name may have at most {NAME_MAX_LEN} characters (received: {len(name)})."
 
     if " " in name:
-        return False, f"Versionsname muss genau ein Wort sein (keine Leerzeichen). Erhalten: '{name}'"
+        return False, f"Version name must be exactly one word (no spaces). Received: '{name}'"
 
     if not NAME_PATTERN.fullmatch(name):
         return False, (
-            f"Versionsname darf nur Buchstaben, Ziffern, _ und - enthalten "
-            f"und muss mit einem Buchstaben beginnen. Erhalten: '{name}'"
+            f"Version name may only contain letters, digits, _ and - "
+            f"and must begin with a letter. Received: '{name}'"
         )
 
     return True, name
 
 
 # ---------------------------------------------------------------------------
-#  Lock-Datei (Schutz gegen gleichzeitige Ausfuehrung)
+#  Lock File (protection against concurrent execution)
 # ---------------------------------------------------------------------------
 
 class VersionLock:
@@ -286,12 +286,12 @@ class VersionLock:
                 pid = lock_data.get("pid", "?")
                 started = lock_data.get("started", "?")
                 _print_error(
-                    f"Build-Vorgang bereits aktiv (PID {pid}, gestartet {started}).\n"
-                    f"  Lock-Datei: {self.lock_path}\n"
-                    f"  Falls kein anderer Prozess laeuft: Lock-Datei manuell loeschen."
+                    f"Build already in progress (PID {pid}, started {started}).\n"
+                    f"  Lock file: {self.lock_path}\n"
+                    f"  If no other process is running: delete lock file manually."
                 )
             except Exception:
-                _print_error(f"Lock-Datei existiert: {self.lock_path}")
+                _print_error(f"Lock file exists: {self.lock_path}")
             return False
 
         lock_data = {
@@ -433,9 +433,9 @@ class BuildManager:
         """Restore package.json to original state (rollback on build failure)."""
         try:
             self._write_package_json(original_data)
-            _print_warn("package.json auf vorherige Version zurueckgesetzt.")
+            _print_warn("package.json reset to previous version.")
         except Exception as e:
-            _print_error(f"Konnte package.json nicht restaurieren: {e}")
+            _print_error(f"Could not restore package.json: {e}")
 
     # -- vsce / npm Handling ------------------------------------------------
 
@@ -464,7 +464,7 @@ class BuildManager:
         if node_modules.exists():
             return True
 
-        _print_info("npm install:", "node_modules fehlt, installiere...")
+        _print_info("npm install:", "node_modules missing, installing...")
         try:
             result = subprocess.run(
                 ["npm", "install"],
@@ -475,15 +475,15 @@ class BuildManager:
                 shell=True,
             )
             if result.returncode == 0:
-                _print_success("npm install erfolgreich")
+                _print_success("npm install successful")
                 return True
-            _print_error(f"npm install fehlgeschlagen:\n{result.stderr}")
+            _print_error(f"npm install failed:\n{result.stderr}")
             return False
         except subprocess.TimeoutExpired:
-            _print_error("npm install Timeout (120s)")
+            _print_error("npm install timeout (120s)")
             return False
         except Exception as e:
-            _print_error(f"npm install Fehler: {e}")
+            _print_error(f"npm install error: {e}")
             return False
 
     def _run_vsce_package(self) -> bool:
@@ -509,20 +509,20 @@ class BuildManager:
                     _print_info("  vsce:", line.strip())
 
             if result.returncode != 0:
-                _print_error(f"vsce package fehlgeschlagen (exit {result.returncode})")
+                _print_error(f"vsce package failed (exit {result.returncode})")
                 if result.stderr.strip():
                     for line in result.stderr.strip().split("\n"):
                         print(f"    {C.RED}{line}{C.RESET}", file=sys.stderr)
                 return False
 
-            _print_success("VSIX erfolgreich gebaut")
+            _print_success("VSIX successfully built")
             return True
 
         except subprocess.TimeoutExpired:
-            _print_error("vsce package Timeout (120s)")
+            _print_error("vsce package timeout (120s)")
             return False
         except Exception as e:
-            _print_error(f"vsce package Fehler: {e}")
+            _print_error(f"vsce package error: {e}")
             return False
 
     def _find_vsix_in_plugin(self) -> Path | None:
@@ -540,7 +540,7 @@ class BuildManager:
         Returns the destination path.
         """
         self.builds_dir.mkdir(parents=True, exist_ok=True)
-        dest_name = f"{version_str}-{name}-{release_tag}{self.VSIX_SUFFIX}"
+        dest_name = f"{version_str}-{name}{self.VSIX_SUFFIX}"
         dest = self.builds_dir / dest_name
         shutil.move(str(vsix_source), str(dest))
         return dest
@@ -548,13 +548,13 @@ class BuildManager:
     def _verify_vsix(self, vsix_path: Path) -> tuple[bool, str]:
         """Verify that VSIX file exists and is valid (> 1KB)."""
         if not vsix_path.exists():
-            return False, f"VSIX-Datei existiert nicht: {vsix_path}"
+            return False, f"VSIX file does not exist: {vsix_path}"
 
         size = vsix_path.stat().st_size
         if size < self.VSIX_MIN_SIZE:
-            return False, f"VSIX-Datei zu klein ({_human_size(size)}): {vsix_path}"
+            return False, f"VSIX file too small ({_human_size(size)}): {vsix_path}"
 
-        return True, f"VSIX verifiziert: {vsix_path.name} ({_human_size(size)})"
+        return True, f"VSIX verified: {vsix_path.name} ({_human_size(size)})"
 
     def _clean_plugin_vsix(self) -> None:
         """Remove any leftover .vsix files from plugin/ directory."""
@@ -578,7 +578,7 @@ class BuildManager:
             )
             return result.returncode == 0, result.stdout.strip(), result.stderr.strip()
         except FileNotFoundError:
-            return False, "", "git ist nicht installiert"
+            return False, "", "git is not installed"
         except subprocess.TimeoutExpired:
             return False, "", f"git {args[0]} Timeout ({timeout}s)"
         except Exception as e:
@@ -596,43 +596,43 @@ class BuildManager:
         Returns (success, message). Failure is non-fatal (warning only).
         """
         _print_separator()
-        _print_info("Git:", "Starte add + commit + push...")
+        _print_info("Git:", "Starting add + commit + push...")
 
         # Check git is available
         ok, _, err = self._run_git_command(["--version"])
         if not ok:
-            return False, f"Git nicht verfuegbar: {err}"
+            return False, f"Git not available: {err}"
 
         # Check remote exists
         ok, remotes, _ = self._run_git_command(["remote"])
         if not ok or not remotes.strip():
-            return False, "Kein Git-Remote konfiguriert. Push uebersprungen."
+            return False, "No Git remote configured. Push skipped."
 
         # Stage all changes
         ok, out, err = self._run_git_command(["add", "."])
         if not ok:
-            return False, f"git add fehlgeschlagen: {err}"
-        _print_info("  git add:", "alle Aenderungen gestaged")
+            return False, f"git add failed: {err}"
+        _print_info("  git add:", "all changes staged")
 
         # Check if there are staged changes
         ok, diff, _ = self._run_git_command(["diff", "--cached", "--stat"])
         if ok and not diff.strip():
-            return False, "Keine Aenderungen zum Committen."
+            return False, "No changes to commit."
 
         # Commit
-        commit_msg = f"{comment} [v{version_str}-{release_tag}]"
+        commit_msg = f"{comment} [v{version_str}]"
         ok, out, err = self._run_git_command(["commit", "-m", commit_msg])
         if not ok:
-            return False, f"git commit fehlgeschlagen: {err}"
+            return False, f"git commit failed: {err}"
         _print_info("  git commit:", commit_msg)
 
         # Push
         ok, out, err = self._run_git_command(["push", "origin"], timeout=120)
         if not ok:
-            return False, f"git push fehlgeschlagen: {err}"
-        _print_success("Git push erfolgreich")
+            return False, f"git push failed: {err}"
+        _print_success("Git push successful")
 
-        return True, "Git add + commit + push erfolgreich"
+        return True, "Git add + commit + push successful"
 
     # -- GitHub Release Operations ------------------------------------------
 
@@ -646,9 +646,9 @@ class BuildManager:
                 timeout=15,
             )
             if result.returncode != 0:
-                return False, "gh CLI nicht installiert"
+                return False, "gh CLI not installed"
         except FileNotFoundError:
-            return False, "gh CLI nicht installiert"
+            return False, "gh CLI not installed"
         except Exception as e:
             return False, str(e)
 
@@ -661,8 +661,8 @@ class BuildManager:
                 timeout=15,
             )
             if result.returncode != 0:
-                return False, "gh CLI nicht authentifiziert. Fuehre 'gh auth login' aus."
-            return True, "gh CLI bereit"
+                return False, "gh CLI not authenticated. Run 'gh auth login'."
+            return True, "gh CLI ready"
         except Exception as e:
             return False, str(e)
 
@@ -678,7 +678,7 @@ class BuildManager:
             _print_info("  Source-ZIP:", f"{zip_name} ({_human_size(zip_path.stat().st_size)})")
             return zip_path
         # Fallback: if HEAD doesn't exist yet (first commit), use git stash approach
-        _print_warn(f"git archive fehlgeschlagen: {err}. Versuche Fallback...")
+        _print_warn(f"git archive failed: {err}. Trying fallback...")
         return self._create_source_zip_fallback(version_str, name)
 
     def _create_source_zip_fallback(self, version_str: str, name: str) -> Path | None:
@@ -705,7 +705,7 @@ class BuildManager:
                 _print_info("  Source-ZIP:", f"{zip_name} ({_human_size(zip_path.stat().st_size)})")
                 return zip_path
         except Exception as e:
-            _print_warn(f"Fallback-ZIP fehlgeschlagen: {e}")
+            _print_warn(f"Fallback ZIP failed: {e}")
         return None
 
     def _create_github_release(
@@ -723,7 +723,7 @@ class BuildManager:
         Returns (success, release_url_or_error).
         """
         _print_separator()
-        _print_info("GitHub Release:", "Starte Release-Erstellung...")
+        _print_info("GitHub Release:", "Starting release creation...")
 
         # Check gh CLI
         ok, msg = self._check_gh_installed()
@@ -749,15 +749,15 @@ class BuildManager:
         # Create and push tag
         ok, _, err = self._run_git_command(["tag", "-a", tag, "-m", comment])
         if not ok:
-            return False, f"git tag fehlgeschlagen: {err}"
+            return False, f"git tag failed: {err}"
         _print_info("  git tag:", tag)
 
         ok, _, err = self._run_git_command(["push", "origin", tag], timeout=60)
         if not ok:
             # Try to delete local tag on push failure
             self._run_git_command(["tag", "-d", tag])
-            return False, f"git push tag fehlgeschlagen: {err}"
-        _print_info("  tag push:", "erfolgreich")
+            return False, f"git push tag failed: {err}"
+        _print_info("  tag push:", "successful")
 
         # Create source zip
         source_zip = self._create_source_zip(version_str, name)
@@ -792,10 +792,10 @@ class BuildManager:
                     pass
 
             if result.returncode != 0:
-                return False, f"gh release create fehlgeschlagen: {result.stderr.strip()}"
+                return False, f"gh release create failed: {result.stderr.strip()}"
 
             release_url = result.stdout.strip()
-            _print_success(f"GitHub Release erstellt: {tag}")
+            _print_success(f"GitHub Release created: {tag}")
             if release_url:
                 _print_info("  Release-URL:", release_url)
             return True, release_url
@@ -803,7 +803,7 @@ class BuildManager:
         except subprocess.TimeoutExpired:
             return False, "gh release create Timeout (120s)"
         except FileNotFoundError:
-            return False, "gh CLI nicht gefunden"
+            return False, "gh CLI not found"
         except Exception as e:
             return False, str(e)
 
@@ -814,8 +814,8 @@ class BuildManager:
         return datetime.now().strftime("%H.%M.%d:%m:%Y")
 
     def generate_build_number(self, version_str: str, total_version_str: str, name: str, release_tag: str) -> str:
-        """Format: {version}.{totalversion}.{HH.MM.DD:MM:YYYY}-{name}-{release_tag}"""
-        return f"{version_str}.{total_version_str}.{self._build_timestamp()}-{name}-{release_tag}"
+        """Format: {version}.{totalversion}.{HH.MM.DD:MM:YYYY}-{name}"""
+        return f"{version_str}.{total_version_str}.{self._build_timestamp()}-{name}"
 
     # -- Hauptlogik ---------------------------------------------------------
 
@@ -830,32 +830,32 @@ class BuildManager:
     ) -> tuple[bool, str]:
         """Create a new versioned VSIX build.
 
-        Ablauf:
-            1. Eingabe-Validierung (Typ, Name, Kommentar, Release-Tag)
-            2. Lock erwerben
-            3. Version berechnen (current + total)
-            4. Bisherige VSIX archivieren
-            5. package.json Version updaten
-            6. VSIX bauen (vsce package)
-            7. VSIX nach .builds/ verschieben + umbenennen
-            8. VSIX verifizieren
-            9. History aktualisieren
+        Flow:
+            1. Input validation (type, name, comment, release tag)
+            2. Acquire lock
+            3. Calculate version (current + total)
+            4. Archive previous VSIX
+            5. Update package.json version
+            6. Build VSIX (vsce package)
+            7. Move VSIX to .builds/ + rename
+            8. Verify VSIX
+            9. Update history
            10. Git add + commit + push
-           11. GitHub Release erstellen
-           12. Lock loesen
+           11. Create GitHub Release
+           12. Release lock
         """
         mode_label = "[DRY-RUN] " if dry_run else ""
         original_pkg: dict | None = None
 
         # -- 1. Validierung Typ ---------------------------------------------
         if change_type not in self.CHANGE_TYPES:
-            return False, f"Ungueltiger Typ: {change_type}. Erlaubt: {', '.join(self.CHANGE_TYPES)}"
+            return False, f"Invalid type: {change_type}. Allowed: {', '.join(self.CHANGE_TYPES)}"
 
         if change_type == "UserapprovedBigBump" and not allow_bigbump:
             return False, (
-                "UserapprovedBigBump erfordert --allow-bigbump.\n"
-                "  Dieser Schutz verhindert versehentliche Major-Releases.\n"
-                "  Nur mit ausdruecklicher Nutzerfreigabe verwenden."
+                "UserapprovedBigBump requires --allow-bigbump.\n"
+                "  This protection prevents accidental major releases.\n"
+                "  Use only with explicit user approval."
             )
 
         # -- Validierung Name -----------------------------------------------
@@ -870,29 +870,29 @@ class BuildManager:
             return False, result
         comment = result
 
-        # -- Eindeutigkeitspruefung Name ------------------------------------
+        # -- Name uniqueness check -------------------------------------------
         if not self.is_name_unique(name):
             return False, (
-                f"Versionsname '{name}' existiert bereits.\n"
-                f"  Jeder Versionsname darf nur einmal verwendet werden.\n"
-                f"  Bitte einen neuen, einzigartigen Namen waehlen."
+                f"Version name '{name}' already exists.\n"
+                f"  Each version name may only be used once.\n"
+                f"  Please choose a new, unique name."
             )
 
-        # -- Plugin-Verzeichnis pruefen -------------------------------------
+        # -- Check plugin directory ------------------------------------------
         if not self.plugin_dir.exists():
-            return False, f"Plugin-Verzeichnis nicht gefunden: {self.plugin_dir}"
+            return False, f"Plugin directory not found: {self.plugin_dir}"
 
         if not self.package_json_path.exists():
-            return False, f"package.json nicht gefunden: {self.package_json_path}"
+            return False, f"package.json not found: {self.package_json_path}"
 
-        # -- 2. Lock erwerben -----------------------------------------------
+        # -- 2. Acquire lock ------------------------------------------------
         if not dry_run:
             if not self._lock.acquire():
-                return False, "Konnte Lock nicht erwerben. Anderer Build-Vorgang aktiv?"
+                return False, "Could not acquire lock. Another build in progress?"
             atexit.register(self._lock.release)
 
         try:
-            # -- 3. Version berechnen ----------------------------------------
+            # -- 3. Calculate version ----------------------------------------
             history = self._load_history()
             cur = Version.from_string(history.get("current_version", "0.0.0"))
             tot = Version.from_string(history.get("total_version", "0.0.0"))
@@ -915,72 +915,72 @@ class BuildManager:
             # -- Header -----------------------------------------------------
             _print_header(f"{mode_label}VSIX Build: {ver_str} ({change_type})")
 
-            _print_info("Vorherige Version:", str(cur))
-            _print_info("Neue Version:", ver_str)
-            _print_info("Total-Version:", f"{tot} -> {tot_str}")
+            _print_info("Previous Version:", str(cur))
+            _print_info("New Version:", ver_str)
+            _print_info("Total Version:", f"{tot} -> {tot_str}")
             _print_info("Name:", name)
-            _print_info("Typ:", change_type)
+            _print_info("Type:", change_type)
             _print_info("Build:", build)
-            _print_info("Kommentar:", comment)
-            _print_info("Release-Tag:", release_tag)
-            _print_info("Zeitpunkt:", now.strftime("%Y-%m-%d %H:%M:%S"))
+            _print_info("Comment:", comment)
+            _print_info("Release Tag:", release_tag)
+            _print_info("Timestamp:", now.strftime("%Y-%m-%d %H:%M:%S"))
 
-            vsix_filename = f"{ver_str}-{name}-{release_tag}{self.VSIX_SUFFIX}"
+            vsix_filename = f"{ver_str}-{name}{self.VSIX_SUFFIX}"
             _print_info("VSIX-Name:", vsix_filename)
 
             if dry_run:
                 _print_separator()
-                _print_warn("DRY-RUN: Keine Aenderungen vorgenommen.")
-                _print_info("  Wuerde:", f"git add . && git commit && git push")
-                _print_info("  Wuerde:", f"GitHub Release v{ver_str}-{release_tag} erstellen")
+                _print_warn("DRY-RUN: No changes made.")
+                _print_info("  Would:", f"git add . && git commit && git push")
+                _print_info("  Would:", f"Create GitHub Release v{ver_str}-{name}")
                 return True, ver_str
 
-            # -- 4. Bisherige VSIX archivieren -------------------------------
+            # -- 4. Archive previous VSIX -----------------------------------
             _print_separator()
             archived_count = self._archive_current_vsix()
             if archived_count > 0:
-                _print_info("Archiviert:", f"{archived_count} VSIX-Datei(en) nach versions/")
+                _print_info("Archived:", f"{archived_count} VSIX file(s) to versions/")
 
-            # -- 5. package.json Version updaten -----------------------------
+            # -- 5. Update package.json version -----------------------------
             _print_info("package.json:", f"Version -> {ver_str}")
             original_pkg = self._update_package_json(ver_str)
 
-            # -- Vorbereitung: npm install + vsce check ----------------------
+            # -- Preparation: npm install + vsce check ----------------------
             if not self._run_npm_install():
                 self._restore_package_json(original_pkg)
-                return False, "npm install fehlgeschlagen"
+                return False, "npm install failed"
 
             if not self._check_vsce_installed():
-                _print_warn("vsce nicht gefunden, versuche trotzdem...")
+                _print_warn("vsce not found, trying anyway...")
 
-            # -- 6. VSIX bauen -----------------------------------------------
+            # -- 6. Build VSIX -----------------------------------------------
             _print_separator()
             self._clean_plugin_vsix()
 
             if not self._run_vsce_package():
                 self._restore_package_json(original_pkg)
-                return False, "VSIX-Build fehlgeschlagen"
+                return False, "VSIX build failed"
 
-            # -- 7. VSIX verschieben -----------------------------------------
+            # -- 7. Move VSIX ------------------------------------------------
             vsix_source = self._find_vsix_in_plugin()
             if not vsix_source:
                 self._restore_package_json(original_pkg)
-                return False, "Keine .vsix-Datei im plugin/ Verzeichnis nach dem Build gefunden"
+                return False, "No .vsix file found in plugin/ directory after build"
 
             vsix_dest = self._move_vsix_to_builds(vsix_source, ver_str, name, release_tag)
-            _print_info("VSIX verschoben:", str(vsix_dest.relative_to(self.repo_root)))
+            _print_info("VSIX moved:", str(vsix_dest.relative_to(self.repo_root)))
 
-            # -- 8. VSIX verifizieren ----------------------------------------
+            # -- 8. Verify VSIX ----------------------------------------------
             ok, verify_msg = self._verify_vsix(vsix_dest)
             if ok:
                 _print_success(verify_msg)
             else:
                 _print_error(verify_msg)
-                return False, f"VSIX-Verifizierung fehlgeschlagen: {verify_msg}"
+                return False, f"VSIX verification failed: {verify_msg}"
 
             vsix_size = vsix_dest.stat().st_size
 
-            # -- 9. History aktualisieren ------------------------------------
+            # -- 9. Update history -------------------------------------------
             record = {
                 "timestamp": now.isoformat(),
                 "change_type": change_type,
@@ -1002,7 +1002,7 @@ class BuildManager:
             history["records"].append(record)
             self._save_history(history)
 
-            _print_success("versions.json aktualisiert")
+            _print_success("versions.json updated")
 
             # -- 10. Git add + commit + push ---------------------------------
             git_pushed = False
@@ -1010,9 +1010,9 @@ class BuildManager:
             if git_ok:
                 git_pushed = True
             else:
-                _print_warn(f"Git push uebersprungen: {git_msg}")
+                _print_warn(f"Git push skipped: {git_msg}")
 
-            # -- 11. GitHub Release erstellen --------------------------------
+            # -- 11. Create GitHub Release -----------------------------------
             release_created = False
             release_url = ""
             if git_pushed:
@@ -1023,9 +1023,9 @@ class BuildManager:
                     release_created = True
                     release_url = rel_result
                 else:
-                    _print_warn(f"GitHub Release uebersprungen: {rel_result}")
+                    _print_warn(f"GitHub Release skipped: {rel_result}")
             else:
-                _print_warn("GitHub Release uebersprungen: Git push war nicht erfolgreich.")
+                _print_warn("GitHub Release skipped: Git push was not successful.")
 
             # Update record with git/release info
             record["git_pushed"] = git_pushed
@@ -1034,72 +1034,72 @@ class BuildManager:
                 record["release_url"] = release_url
             self._save_history(history)
 
-            # -- Zusammenfassung --------------------------------------------
+            # -- Summary ----------------------------------------------------
             _print_separator()
-            _print_success(f"Version {ver_str} ({name}) erfolgreich gebaut!")
+            _print_success(f"Version {ver_str} ({name}) successfully built!")
             _print_info("VSIX:", vsix_dest.name)
-            _print_info("Groesse:", _human_size(vsix_size))
-            _print_info("Release-Tag:", release_tag)
-            _print_info("Git Push:", "Ja" if git_pushed else "Nein")
-            _print_info("GitHub Release:", release_url if release_created else "Nein")
+            _print_info("Size:", _human_size(vsix_size))
+            _print_info("Release Tag:", release_tag)
+            _print_info("Git Push:", "Yes" if git_pushed else "No")
+            _print_info("GitHub Release:", release_url if release_created else "No")
 
             return True, ver_str
 
         except Exception as e:
             if original_pkg is not None:
                 self._restore_package_json(original_pkg)
-            _print_error(f"Unerwarteter Fehler: {e}")
+            _print_error(f"Unexpected error: {e}")
             return False, str(e)
 
         finally:
             if not dry_run:
                 self._lock.release()
 
-    # -- Informationsabfragen -----------------------------------------------
+    # -- Information queries -----------------------------------------------
 
     def print_info(self) -> None:
-        """Zeigt die aktuelle Versionsinformation an."""
+        """Show current version information."""
         history = self._load_history()
-        _print_header("Aktuelle Version")
+        _print_header("Current Version")
         _print_info("Version:", history.get("current_version", "0.0.0"))
-        _print_info("Total-Version:", history.get("total_version", "0.0.0"))
+        _print_info("Total Version:", history.get("total_version", "0.0.0"))
 
         records = history.get("records", [])
         if records:
             last = records[-1]
-            _print_info("Letzter Release:", last.get("name", "?"))
-            _print_info("Typ:", last.get("change_type", "?"))
-            _print_info("Kommentar:", last.get("comment", "?"))
-            _print_info("Zeitpunkt:", last.get("timestamp", "?"))
+            _print_info("Last Release:", last.get("name", "?"))
+            _print_info("Type:", last.get("change_type", "?"))
+            _print_info("Comment:", last.get("comment", "?"))
+            _print_info("Timestamp:", last.get("timestamp", "?"))
             _print_info("Build:", last.get("build_number", "?"))
             _print_info("VSIX:", last.get("vsix_file", "?"))
-            _print_info("Groesse:", last.get("vsix_size_human", "?"))
+            _print_info("Size:", last.get("vsix_size_human", "?"))
         else:
-            print(f"\n  {C.DIM}Noch keine VSIX-Builds vorhanden.{C.RESET}")
+            print(f"\n  {C.DIM}No VSIX builds available yet.{C.RESET}")
 
-        # Archivierte Versionen zaehlen
+        # Count archived versions
         archive_count = 0
         if self.versions_archive_dir.exists():
             archive_count = sum(1 for f in self.versions_archive_dir.iterdir() if f.name.endswith(".vsix"))
         _print_separator()
-        _print_info("Archivierte Builds:", str(archive_count))
+        _print_info("Archived Builds:", str(archive_count))
 
     def print_list(self, last_n: int = 0) -> None:
-        """Zeigt die Versionshistorie als Tabelle an."""
+        """Show version history as a table."""
         history = self._load_history()
         records = history.get("records", [])
 
         if not records:
-            _print_header("Build-Historie")
-            print(f"\n  {C.DIM}Keine Eintraege vorhanden.{C.RESET}")
+            _print_header("Build History")
+            print(f"\n  {C.DIM}No entries available.{C.RESET}")
             return
 
         if last_n > 0:
             records = records[-last_n:]
 
-        _print_header(f"Build-Historie ({len(records)} Eintraege)")
+        _print_header(f"Build History ({len(records)} entries)")
 
-        # Spaltenbreiten
+        # Column widths
         col_ver = 10
         col_tot = 12
         col_typ = 14
@@ -1113,11 +1113,11 @@ class BuildManager:
             f"  {C.BOLD}"
             f"{'Version':<{col_ver}}"
             f"{'Total':<{col_tot}}"
-            f"{'Typ':<{col_typ}}"
+            f"{'Type':<{col_typ}}"
             f"{'Name':<{col_name}}"
-            f"{'Groesse':<{col_size}}"
-            f"{'Datum':<{col_date}}"
-            f"{'Kommentar':<{col_comment}}"
+            f"{'Size':<{col_size}}"
+            f"{'Date':<{col_date}}"
+            f"{'Comment':<{col_comment}}"
             f"{C.RESET}"
         )
         print(f"  {'-' * (col_ver + col_tot + col_typ + col_name + col_size + col_date + col_comment)}")
@@ -1152,56 +1152,56 @@ class BuildManager:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="build.py",
-        description="Sudx Copilot Customizations — VSIX Build, Versionierung & History.",
+        description="Sudx Copilot Customizations — VSIX Build, Versioning & History.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=textwrap.dedent("""\
-            Beispiele:
-              python build.py -f -b Firefox  -k "FIX: Auth-Bug behoben" -Normal
-              python build.py -n -b Pegasus  -k "NEU: Dashboard-Feature" -UserapprovedStable
-              python build.py -u -b Zeus     -k "REM: Architektur-Umbau" -Normal --allow-bigbump
+            Examples:
+              python build.py -f -b Firefox  -k "FIX: Fixed auth bug" -Normal
+              python build.py -n -b Pegasus  -k "NEU: Dashboard feature" -UserapprovedStable
+              python build.py -u -b Zeus     -k "REM: Architecture overhaul" -Normal --allow-bigbump
               python build.py --list
               python build.py --list --last 5
               python build.py --info
               python build.py -f -b TestRun  -k "FIX: Test" -Normal --dry-run
 
-            Kommentar-Prefixe (Pflicht):
-              FIX:   Reparatur / Anpassung bestehender Funktion
-              NEU:   Neue Funktionalitaet fuer Nutzer
-              REM:   Entfernung / groessere Restrukturierung
+            Comment Prefixes (required):
+              FIX:   Repair / adjustment of existing function
+              NEU:   New functionality for users
+              REM:   Removal / major restructuring
 
-            Release-Tags (Pflicht, eines von beiden):
+            Release Tags (required, one of two):
               -Normal                Unstable Release (prerelease)
               -UserapprovedStable    Stable Release
 
-            Versionsschema:
+            Version Schema:
               Fix                    +0.0.1   (Patch)
-              NewFunction            +0.1.0   (Minor, Patch-Reset)
-              UserapprovedBigBump    +1.0.0   (Major, Minor+Patch-Reset, nur mit --allow-bigbump)
+              NewFunction            +0.1.0   (Minor, patch reset)
+              UserapprovedBigBump    +1.0.0   (Major, minor+patch reset, requires --allow-bigbump)
         """),
     )
 
-    # -- Info-Modus ---------------------------------------------------------
-    info_group = parser.add_argument_group("Informationen")
+    # -- Info mode ----------------------------------------------------------
+    info_group = parser.add_argument_group("Information")
     info_group.add_argument(
         "--info",
         action="store_true",
-        help="Zeigt aktuelle Versionsinformationen an",
+        help="Show current version information",
     )
     info_group.add_argument(
         "--list",
         action="store_true",
-        help="Zeigt die Build-Historie als Tabelle an",
+        help="Show build history as a table",
     )
     info_group.add_argument(
         "--last",
         type=int,
         default=0,
         metavar="N",
-        help="Nur die letzten N Eintraege anzeigen (mit --list)",
+        help="Show only the last N entries (with --list)",
     )
 
-    # -- Build-Modus --------------------------------------------------------
-    ver_group = parser.add_argument_group("Versionierung & Build")
+    # -- Build mode ---------------------------------------------------------
+    ver_group = parser.add_argument_group("Versioning & Build")
     type_group = ver_group.add_mutually_exclusive_group()
     type_group.add_argument(
         "-f", "--fix",
@@ -1215,44 +1215,44 @@ def parse_args() -> argparse.Namespace:
         action="store_const",
         const="NewFunction",
         dest="change_type",
-        help="Minor-Release mit neuer Funktion (+0.1.0)",
+        help="Minor release with new function (+0.1.0)",
     )
     type_group.add_argument(
         "-u", "--userapprovedbigbump",
         action="store_const",
         const="UserapprovedBigBump",
         dest="change_type",
-        help="Major-Release (+1.0.0) [erfordert --allow-bigbump]",
+        help="Major release (+1.0.0) [requires --allow-bigbump]",
     )
 
     ver_group.add_argument(
         "-b", "--bezeichnung",
         dest="name",
         default="",
-        help="Eindeutiger Versionsname (z.B. Firefox, Pegasus, Zeus)",
+        help="Unique version name (e.g. Firefox, Pegasus, Zeus)",
     )
 
     ver_group.add_argument(
         "-k", "--kommentar",
         dest="comment",
         default="",
-        help='Kommentar mit Pflicht-Prefix (z.B. "FIX: Bugfix im Auth-Modul")',
+        help='Comment with required prefix (e.g. "FIX: Fixed auth module bug")',
     )
 
     ver_group.add_argument(
         "--allow-bigbump",
         action="store_true",
-        help="Erlaubt UserapprovedBigBump (nur mit ausdruecklicher Nutzerfreigabe)",
+        help="Allow UserapprovedBigBump (only with explicit user approval)",
     )
 
     ver_group.add_argument(
         "--dry-run",
         action="store_true",
-        help="Simuliert den Vorgang ohne Aenderungen",
+        help="Simulate the process without making changes",
     )
 
-    # -- Release-Tag (Pflicht bei Build) ------------------------------------
-    tag_group = parser.add_argument_group("Release-Tag (Pflicht bei Build)")
+    # -- Release tag (required for build) -----------------------------------
+    tag_group = parser.add_argument_group("Release Tag (required for build)")
     tag_exclusive = tag_group.add_mutually_exclusive_group()
     tag_exclusive.add_argument(
         "-Normal",
@@ -1291,31 +1291,31 @@ def main() -> int:
         manager.print_list(last_n=args.last)
         return 0
 
-    # -- Build-Modus: Pflichtfelder pruefen ---------------------------------
+    # -- Build mode: check required fields ----------------------------------
     if not args.change_type:
-        _print_error("Kein Versionstyp angegeben. Verwende -f, -n oder -u.")
+        _print_error("No version type specified. Use -f, -n or -u.")
         return 1
 
     if not args.name:
-        _print_error("Kein Versionsname angegeben. Verwende -b <Name>.")
+        _print_error("No version name specified. Use -b <Name>.")
         return 1
 
     if not args.comment:
         _print_error(
-            "Kein Kommentar angegeben. Verwende -k \"<PREFIX>: <Beschreibung>\".\n"
-            f"  Erlaubte Prefixe: {', '.join(VALID_COMMENT_PREFIXES)}"
+            "No comment specified. Use -k \"<PREFIX>: <Description>\".\n"
+            f"  Allowed prefixes: {', '.join(VALID_COMMENT_PREFIXES)}"
         )
         return 1
 
     if not args.release_tag:
         _print_error(
-            "Kein Release-Tag angegeben. Eines von beiden ist Pflicht:\n"
+            "No release tag specified. One of two is required:\n"
             "  -Normal                Unstable Release (prerelease)\n"
             "  -UserapprovedStable    Stable Release"
         )
         return 1
 
-    # -- Ausfuehrung --------------------------------------------------------
+    # -- Execution ----------------------------------------------------------
     success, result = manager.create_version(
         change_type=args.change_type,
         name=args.name,

@@ -130,11 +130,7 @@ try {
                 $reason += "- NEVER batch-check multiple items in one edit`n"
                 $reason += "- NEVER use multi_replace to mark multiple checkmarks at once`n"
                 $reason += "- NEVER group completions`n`n"
-                $reason += "Go back and make $totalNewChecks SEPARATE edits, each changing exactly ONE checkbox from [ ] to [x].`n`n"
-                $reason += "--- DEUTSCH ---`n"
-                $reason += "VERSTOSS #$violationNum gegen execute_plan.instructions.md!`n"
-                $reason += "Du hast versucht $totalNewChecks Checkmarks in EINEM Edit zu setzen. Das ist STRENG VERBOTEN.`n"
-                $reason += "Mache $totalNewChecks EINZELNE Edits, jeder aendert genau EINE Checkbox von [ ] zu [x]."
+                $reason += "Go back and make $totalNewChecks SEPARATE edits, each changing exactly ONE checkbox from [ ] to [x]."
             }
 
             # REJECT: Task deletion (removing unchecked items = skipping tasks)
@@ -143,10 +139,7 @@ try {
                 $decision = "deny"
                 $reason = "VIOLATION #$violationNum of execute_plan.instructions.md!`n"
                 $reason += "You attempted to REMOVE $totalTasksRemoved unchecked task(s) from a plan file. This is STRICTLY FORBIDDEN.`n`n"
-                $reason += "Plan tasks MUST NOT be deleted or skipped. Every task must be completed and checked off individually.`n`n"
-                $reason += "--- DEUTSCH ---`n"
-                $reason += "VERSTOSS #$violationNum gegen execute_plan.instructions.md!`n"
-                $reason += "Du hast versucht $totalTasksRemoved unerledigte Aufgabe(n) aus dem Plan zu entfernen. Das ist STRENG VERBOTEN."
+                $reason += "Plan tasks MUST NOT be deleted or skipped. Every task must be completed and checked off individually."
             }
         }
     }
