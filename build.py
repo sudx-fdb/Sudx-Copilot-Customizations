@@ -730,8 +730,9 @@ class BuildManager:
         if not ok:
             return False, msg
 
-        tag = f"v{version_str}-{release_tag}"
-        title = f"v{version_str} — {name} ({release_tag})"
+        tag_safe = build_number.replace(":", ".")
+        tag = f"v{tag_safe}"
+        title = f"v{build_number}"
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         body = (
             f"## {title}\n\n"
