@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "windows": "powershell -ExecutionPolicy Bypass -NoProfile -File .github/hooks/scripts/protect-plans.ps1",
+        "linux": "bash .github/hooks/scripts/protect-plans.sh",
+        "osx": "bash .github/hooks/scripts/protect-plans.sh",
+        "timeout": 5
+      }
+    ]
+  }
+}

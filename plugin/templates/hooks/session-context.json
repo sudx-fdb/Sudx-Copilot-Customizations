@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "windows": "powershell -ExecutionPolicy Bypass -NoProfile -File .github/hooks/scripts/inject-context.ps1",
+        "linux": "bash .github/hooks/scripts/inject-context.sh",
+        "osx": "bash .github/hooks/scripts/inject-context.sh",
+        "timeout": 10
+      }
+    ]
+  }
+}

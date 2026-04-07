@@ -1,0 +1,70 @@
+---
+name: documentation-code
+description: "Erstellt oder aktualisiert Code-Dokumentation (technische Funktionsbeschreibungen). Use when: Code-Docs schreiben, technische Dokumentation aktualisieren, code_docs befüllen, Funktionsweise dokumentieren, Code erklären."
+argument-hint: "Optional: Bestimmte Dateien oder Module die dokumentiert werden sollen"
+---
+
+# Code Documentation
+
+## Zweck
+Erstellt oder aktualisiert die **technische Code-Dokumentation**, die beschreibt wie der Code funktioniert. Diese Doku ist NUR für codebezogene Informationen gedacht — keine Endnutzer-Anleitungen.
+
+## Wann verwenden
+- Code-Dokumentation soll erstellt oder aktualisiert werden
+- Technische Funktionsweise muss dokumentiert werden
+- Nach Code-Änderungen müssen die Docs nachgezogen werden
+- `docs/code_docs/` soll befüllt oder überarbeitet werden
+
+## Dokumentationsregeln
+
+Befolge IMMER diese Regeln aus [documentation.instructions.md](../../instructions/documentation.instructions.md):
+- Diese Doku ist NUR für codebezogene Informationen gedacht
+- Vermeide Doppeleinträge
+- Halte Einträge kurz, eindeutig und pfadbezogen
+- Codebeispiele sind erlaubt, wenn sie für technische Nachvollziehbarkeit sinnvoll sind
+- Dokumentiere KEINE reinen Bedienhinweise für Endnutzer
+- `inhalt.md` verwendet das Format: `{relative file path} | {Kurzbeschreibung}`
+
+## Procedure
+
+### Schritt 1: Scope bestimmen
+- Wurden bestimmte Dateien/Module vom User genannt? → Nur diese dokumentieren
+- Kein spezifischer Scope? → Gesamte Codebasis durchgehen
+
+### Schritt 2: Code verstehen
+Für jede zu dokumentierende Datei:
+1. Datei vollständig lesen und Struktur verstehen
+2. Alle Funktionen, Klassen und deren Zusammenspiel identifizieren
+3. Datenflüsse und Abhängigkeiten nachvollziehen
+4. Konfigurationsparameter und deren Auswirkungen erfassen
+
+### Schritt 3: Dokumentation schreiben
+Pro Datei/Modul dokumentieren:
+- **Zweck**: Was macht diese Datei/dieses Modul?
+- **Abhängigkeiten**: Welche anderen Module werden genutzt?
+- **Funktionen/Klassen**: Jede mit Parametern, Rückgabewerten, Seiteneffekten
+- **Datenstrukturen**: Wichtige Objekte, Typen, Schemas
+- **Konfiguration**: Welche Config-Werte beeinflussen das Verhalten?
+- **Fehlerbehandlung**: Welche Exceptions können auftreten?
+- **Codebeispiele**: Nur wo sie für technische Nachvollziehbarkeit nötig sind
+
+### Schritt 4: inhalt.md aktualisieren
+- `docs/code_docs/inhalt.md` mit allen neuen/geänderten Einträgen aktualisieren
+- Format: `{relative file path} | {Kurzbeschreibung}`
+- Doppeleinträge entfernen
+- Veraltete Einträge entfernen oder aktualisieren
+
+### Schritt 5: Qualitätsprüfung
+- [ ] Keine Doppeleinträge in der Dokumentation
+- [ ] Alle Einträge sind kurz, eindeutig und pfadbezogen
+- [ ] Keine Endnutzer-Bedienhinweise in der Code-Doku
+- [ ] Codebeispiele nur wo technisch sinnvoll
+- [ ] `inhalt.md` ist aktuell und vollständig
+- [ ] Alle dokumentierten Funktionen existieren noch im Code
+- [ ] Keine veralteten oder entfernten Features dokumentiert
+
+### Schritt 6: Gegenlesen
+- Gesamte erstellte Dokumentation nochmal vollständig lesen
+- Auf Doppeleinträge, Widersprüche und Veraltungen prüfen
+- Bei Doppeleinträgen: zusammenfassen oder entfernen
+- Sicherstellen dass die Doku den aktuellen Codestand widerspiegelt

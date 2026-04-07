@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <defs>
+    <linearGradient id="mainGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d4aa"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#111111"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="62" fill="url(#bgGrad)"/>
+  <circle cx="64" cy="64" r="60" stroke="url(#mainGrad)" stroke-width="3" fill="none" opacity="0.6"/>
+
+  <!-- Outer ring -->
+  <circle cx="64" cy="64" r="54" stroke="url(#mainGrad)" stroke-width="2" fill="none" stroke-dasharray="8 6" opacity="0.3"/>
+
+  <!-- Central S-curve path -->
+  <g filter="url(#glow)">
+    <path d="M48 88 C48 60, 56 44, 80 40 C68 52, 64 64, 64 88"
+          stroke="url(#mainGrad)" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Top dot -->
+  <circle cx="80" cy="40" r="5" fill="url(#mainGrad)" filter="url(#glow)"/>
+
+  <!-- Bottom dot -->
+  <circle cx="48" cy="88" r="4" fill="#00d4aa" opacity="0.7"/>
+  <circle cx="64" cy="88" r="4" fill="#7c3aed" opacity="0.7"/>
+
+  <!-- Decorative small dots -->
+  <circle cx="38" cy="52" r="2" fill="#00d4aa" opacity="0.3"/>
+  <circle cx="90" cy="76" r="2" fill="#7c3aed" opacity="0.3"/>
+  <circle cx="44" cy="72" r="1.5" fill="#00d4aa" opacity="0.2"/>
+  <circle cx="84" cy="56" r="1.5" fill="#7c3aed" opacity="0.2"/>
+</svg>

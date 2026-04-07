@@ -1,0 +1,87 @@
+---
+name: documentation-usage
+description: "Erstellt oder aktualisiert Nutzungs-Dokumentation (User-Facing). Use when: Usage-Docs schreiben, Bedienungsanleitung erstellen, Nutzer-Dokumentation aktualisieren, Setup-Anleitung schreiben, Feature-Beschreibung für Endnutzer."
+argument-hint: "Optional: Bestimmte Features oder Funktionen die dokumentiert werden sollen"
+---
+
+# Usage Documentation
+
+## Zweck
+Erstellt oder aktualisiert die **Nutzungs-Dokumentation**, die beschreibt wie das Projekt aus Anwendersicht funktioniert. Kein Code, keine Implementierungsdetails — nur Setup, Zweck, Funktionalität und Bedienung.
+
+## Wann verwenden
+- Nutzungs-Dokumentation soll erstellt oder aktualisiert werden
+- Bedienungsanleitung für Endnutzer schreiben
+- Setup-Anleitung erstellen oder überarbeiten
+- Feature-Beschreibungen aus Nutzersicht dokumentieren
+- `docs/usage_docs/` soll befüllt oder überarbeitet werden
+
+## Dokumentationsregeln
+
+Befolge IMMER diese Regeln aus [documentation.instructions.md](../../instructions/documentation.instructions.md):
+- Diese Doku beschreibt NUR Nutzung, Verhalten und Funktion aus Sicht des Programms/Nutzers
+- KEINE Codebeispiele
+- KEINE Implementierungsdetails
+- Beschreibe was eine Funktion tut und wie sie sich für Nutzer auswirkt
+- `inhalt.md` verwendet das Format: `{relative file path} | {Kurzbeschreibung}`
+- Vermeide Doppeleinträge und technische Referenzen auf interne Code-Strukturen
+
+## Procedure
+
+### Schritt 1: Scope bestimmen
+- Wurden bestimmte Features/Funktionen vom User genannt? → Nur diese dokumentieren
+- Kein spezifischer Scope? → Gesamte Funktionalität des Projekts durchgehen
+
+### Schritt 2: Funktionalität verstehen
+Für jedes zu dokumentierende Feature:
+1. Code lesen um die Funktionalität vollständig zu verstehen
+2. Alle Nutzungs-Szenarien identifizieren
+3. Konfigurationsoptionen die den Nutzer betreffen erfassen
+4. Typische Workflows und Anwendungsfälle durchspielen
+
+### Schritt 3: Dokumentation schreiben
+Pro Feature/Funktionalität dokumentieren:
+- **Was macht es?** — Klare, nicht-technische Beschreibung
+- **Warum?** — Welches Problem löst es für den Nutzer?
+- **Wie nutzt man es?** — Schritt-für-Schritt Anleitung
+- **Konfiguration** — Welche Einstellungen kann der Nutzer vornehmen?
+- **Verhalten** — Was passiert bei bestimmten Aktionen / in bestimmten Situationen?
+- **Bekannte Einschränkungen** — Was geht aktuell (noch) nicht?
+
+**VERBOTEN in Usage-Docs:**
+- Codebeispiele oder Code-Snippets
+- Funktionsnamen, Variablennamen, Klassennamen
+- Dateipfade zu Quelldateien
+- Technische Implementierungsdetails
+- Referenzen auf interne Code-Strukturen
+
+### Schritt 4: Setup-Anleitung prüfen
+Falls das Projekt ein Setup benötigt:
+1. Voraussetzungen (Betriebssystem, Software, Versionen)
+2. Installation Schritt für Schritt
+3. Erstkonfiguration
+4. Erster Start / Erster Test
+5. Häufige Probleme und Lösungen
+
+### Schritt 5: inhalt.md aktualisieren
+- `docs/usage_docs/inhalt.md` mit allen neuen/geänderten Einträgen aktualisieren
+- Format: `{relative file path} | {Kurzbeschreibung}`
+- Doppeleinträge entfernen
+- Veraltete Einträge entfernen oder aktualisieren
+
+### Schritt 6: Qualitätsprüfung
+- [ ] Keine Codebeispiele in der Usage-Doku
+- [ ] Keine Implementierungsdetails oder Funktionsnamen
+- [ ] Keine Referenzen auf interne Code-Strukturen
+- [ ] Jedes Feature ist aus Nutzersicht beschrieben
+- [ ] Setup-Anleitung ist vollständig und nachvollziehbar
+- [ ] Keine Doppeleinträge
+- [ ] `inhalt.md` ist aktuell und vollständig
+- [ ] Keine veralteten Features dokumentiert
+
+### Schritt 7: Gegenlesen
+- Gesamte erstellte Dokumentation nochmal vollständig lesen
+- Perspektivwechsel: Als Endnutzer lesen — ist alles verständlich OHNE Codekenntnis?
+- Doppeleinträge identifizieren und zusammenfassen
+- Widersprüche und Veraltungen bereinigen
+- Sicherstellen dass die Doku den aktuellen Funktionsumfang widerspiegelt

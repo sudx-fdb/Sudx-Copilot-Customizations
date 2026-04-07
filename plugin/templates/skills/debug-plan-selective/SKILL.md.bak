@@ -1,0 +1,103 @@
+---
+name: debug-plan-selective
+description: "Erstellt einen gezielten Debug-Plan für ausgewählte Dateien oder Funktionen. Use when: Bug in bestimmter Funktion fixen, Debug-Logging selektiv einbauen, Error-Handling für bestimmte Module härten, gezieltes Bughunting."
+argument-hint: "Dateien, Funktionen oder Module die debuggt werden sollen"
+---
+
+# Debug Plan — Selektiv
+
+## Zweck
+Erstellt einen fokussierten Debug- und Bughunting-Plan für **ausgewählte Dateien, Funktionen oder Module**. Der Plan deckt ab:
+- Alle Bug-Möglichkeiten in den betroffenen Bereichen
+- Fehlendes Error-Handling und Edge Cases
+- Debug-Logging-Integration in betroffenen Funktionen
+- Crash-Resistenz und Autorecovery für die betroffenen Bereiche
+- Bug-Hardening (defensive Programmierung)
+
+## Wann verwenden
+- Ein bestimmter Bug soll gefunden und behoben werden
+- Debug-Logging soll in bestimmte Module eingebaut werden
+- Error-Handling für ausgewählte Funktionen härten
+- Gezielte Stabilitätsverbesserung ohne Gesamtprojekt-Scan
+
+## Vorbereitung
+
+1. **Planformat laden**
+   - Lies [planformat.md](../planformat.md) vollständig durch
+   - Verwende den Abschnitt **"Funktionsüberarbeitung / Einzelfixes"** (selektiv) als Template
+2. **Betroffene Bereiche identifizieren**
+   - User-Angabe: Welche Dateien / Funktionen / Module?
+   - Abhängigkeiten dieser Bereiche ermitteln (Caller, Callees, Shared State)
+   - Auch indirekt betroffene Dateien in den Plan aufnehmen
+3. **Bestehende Debug-Infrastruktur prüfen**
+   - Gibt es ein zentrales Logging-System? → Verwende es konsequent
+   - Gibt es ein Language-Pack? → Alle Ausgaben darüber routen
+   - Gibt es Config-Dateien? → Konfigurierbare Werte identifizieren
+   - Gibt es Cache/State-Management? → Für Autorecovery nutzen
+
+## Procedure — Planerstellung
+
+### Schritt 1: Scope definieren
+Kläre mit dem User welche Bereiche betroffen sind. Liste alle relevanten Dateien und Funktionen.
+
+### Schritt 2: Kategorien erstellen
+Für jeden betroffenen Bereich erstelle eine Kategorie:
+
+```md
+## 1. {Kategorie Name}
+### Description
+Detaillierte Beschreibung der Aufgabe und deren Ziel. Alle Bug-Risiken, offene Edge Cases und fehlende Absicherungen auflisten.
+
+### TaskList
+- [ ] {Konkrete Bug-Fixes und Findings}
+- [ ] {Fehlende Validierungen und Boundary Checks}
+- [ ] {Unbehandelte Exceptions und Error Paths}
+- [ ] Extrem detailliertes DEBUG-Logging FÜR JEDE EINZELNE FUNKTION eingebaut
+- [ ] Gesamte Datei auf konfigurierbare Werte geprüft und in Config ausgelagert
+- [ ] Alle Language Keys ins zentrale Language-Pack gepackt
+- [ ] Alle temporären Speicherungen im Cache (sauber sortiert) registriert
+- [ ] Gesamten neuen Code vollständig Crash-Resistent gemacht, States für Autorecovery speichern
+- [ ] Autorecovery so tief integriert wie möglich
+- [ ] Geprüft ob ALLE vorherigen Aufgaben auf HÖCHSTER DETAILTIEFE und Produktionsqualität umgesetzt wurden.
+- [ ] Alle Checkmarks DIESER Kategorie überprüft und korrekt mit [x] gesetzt SOFERN DIESE WIRKLICH ZUTREFFEN
+```
+
+### Schritt 3: Pflicht-Checkpoints sicherstellen
+JEDE Kategorie MUSS am Ende die letzten zwei Checkpoints enthalten:
+```md
+- [ ] Geprüft ob ALLE vorherigen Aufgaben auf HÖCHSTER DETAILTIEFE und Produktionsqualität umgesetzt wurden.
+- [ ] Alle Checkmarks DIESER Kategorie überprüft und korrekt mit [x] gesetzt SOFERN DIESE WIRKLICH ZUTREFFEN
+```
+
+### Schritt 4: Final-Sektion anfügen
+Am Ende des Plans MUSS exakt diese Final-Tasklist stehen:
+```md
+## FINAL
+### TaskList
+- [ ] Gesamte Implementation dieses Plans überprüft
+- [ ] Alle Checkmarks KORREKT gesetzt
+- [ ] Code Docs und Usage Docs aktualisiert mit Neuerungen / Veränderungen / Entfernungen
+- [ ] Code Docs und Usage Docs nach Aktualisierung vollständig gelesen und ggf. überarbeitet / zusammengefasst bei Doppeleinträgen oder Veraltungen
+- [ ] docs\code_docs\inhalt.md aktualisiert
+- [ ] docs\usage_docs\inhalt.md aktualisiert
+- [ ] version.py ausgeführt NACH ERNEUTER RULES LESUNG
+```
+
+## Qualitätskriterien
+
+- [ ] Alle vom User genannten Bereiche sind im Plan enthalten
+- [ ] Indirekt betroffene Abhängigkeiten wurden identifiziert und einbezogen
+- [ ] Jede Kategorie hat eine detaillierte Description mit konkreten Findings
+- [ ] Debug-Logging ist für jede betroffene Funktion eingeplant
+- [ ] Error-Handling deckt alle identifizierten Risiken ab
+- [ ] Pflicht-Checkpoints stehen in JEDER Kategorie
+- [ ] Final-Tasklist ist vollständig und unverändert vorhanden
+
+## Umsetzungsregeln (beim Abarbeiten des Plans)
+
+> **KRITISCH:** Diese Regeln gelten IMMER wenn der Plan abgearbeitet wird:
+> - Aufgaben EINZELN abarbeiten und abhaken — NIEMALS mehrere gleichzeitig
+> - Checkmarks LIVE aktuell halten — sofort nach Erledigung setzen
+> - Die letzten 2 Checkpoints jeder Kategorie EINZELN und SORGFÄLTIG prüfen
+> - Erst nach echter Prüfung abhaken — nicht automatisch durchwinken
+> - Bei mehreren Plänen: nur einen Plan gleichzeitig bearbeiten

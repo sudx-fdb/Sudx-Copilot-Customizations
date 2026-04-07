@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "type": "command",
+        "windows": "powershell -ExecutionPolicy Bypass -NoProfile -File .github/hooks/scripts/post-edit.ps1",
+        "linux": "bash .github/hooks/scripts/post-edit.sh",
+        "osx": "bash .github/hooks/scripts/post-edit.sh",
+        "timeout": 15
+      }
+    ]
+  }
+}

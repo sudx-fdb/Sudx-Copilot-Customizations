@@ -1,0 +1,348 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sudx Copilot Customizations — Hacker Terminal Design System
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── CSS Custom Properties ────────────────────────────────────────────────── */
+
+:root {
+  /* Backgrounds */
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-card: #0d0d0d;
+
+  /* Green Palette */
+  --green-primary: #00ff41;
+  --green-dim: #00cc33;
+  --green-glow: rgba(0, 255, 65, 0.5);
+  --green-bright: #39ff14;
+  --green-muted: #006622;
+  --green-dark: #003311;
+
+  /* Accent Colors */
+  --red: #ff0033;
+  --red-glow: rgba(255, 0, 51, 0.4);
+  --yellow: #ffff00;
+  --yellow-glow: rgba(255, 255, 0, 0.4);
+  --cyan: #00ffff;
+
+  /* Semantic State Colors (color-blind safe layer) */
+  --color-success: var(--green-primary);
+  --color-error: var(--red);
+  --color-warning: var(--yellow);
+  --color-info: var(--cyan);
+
+  /* State Color Aliases (for components) */
+  --state-success: var(--color-success);
+  --state-error: var(--color-error);
+  --state-warning: var(--color-warning);
+  --state-info: var(--color-info);
+  --state-deploying: var(--yellow);
+
+  /* Text */
+  --text-primary: #00ff41;
+  --text-secondary: #00cc33;
+  --text-muted: #006622;
+  --text-dim: #003311;
+  --text-error: #ff0033;
+  --text-warn: #ffff00;
+
+  /* Typography */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  --font-size-xs: clamp(0.5625rem, 0.5rem + 0.2vw, 0.65rem);
+  --font-size-sm: clamp(0.625rem, 0.575rem + 0.25vw, 0.75rem);
+  --font-size-base: clamp(0.6875rem, 0.625rem + 0.3vw, 0.8125rem);
+  --font-size-md: clamp(0.75rem, 0.675rem + 0.3vw, 0.875rem);
+  --font-size-lg: clamp(0.8125rem, 0.725rem + 0.35vw, 1rem);
+  --font-size-xl: clamp(1rem, 0.9rem + 0.4vw, 1.25rem);
+  --font-size-2xl: clamp(1.125rem, 1rem + 0.5vw, 1.5rem);
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+
+  /* Effects */
+  --glow-text: 0 0 8px rgba(0, 255, 65, 0.6);
+  --glow-strong: 0 0 20px rgba(0, 255, 65, 0.8), 0 0 40px rgba(0, 255, 65, 0.3);
+  --glow-subtle: 0 0 4px rgba(0, 255, 65, 0.3);
+  --border-glow: 1px solid rgba(0, 255, 65, 0.25);
+  --border-dim: 1px solid rgba(0, 255, 65, 0.1);
+  --border-bright: 1px solid rgba(0, 255, 65, 0.5);
+
+  /* Layout */
+  --container-max-width: clamp(320px, 90vw, 840px);
+  --scan-line-speed: 8s;
+
+  /* Timing */
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 600ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Animation Timing Tokens */
+  --cursor-blink-rate: 0.8s;
+  --timing-pulse-active: 2s;
+  --timing-pulse-deploy: 1s;
+  --timing-pulse-error: 1.5s;
+
+  /* Glow Levels */
+  --glow-opacity-subtle: 0.08;
+  --glow-opacity-medium: 0.15;
+  --glow-opacity-strong: 0.3;
+  --matrix-opacity: 0.12;
+}
+
+/* ─── Theme Layer (prepared, dark is default via :root) ────────────────────── */
+
+:root[data-theme="light"] {
+  --bg-primary: #f0f0f0;
+  --bg-secondary: #e0e0e0;
+  --bg-card: #ffffff;
+  --text-primary: #003311;
+  --text-secondary: #006622;
+  --text-muted: #669977;
+  --text-dim: #99bbaa;
+  --green-primary: #008830;
+  --green-dim: #006622;
+  --border-glow: 1px solid rgba(0, 136, 48, 0.3);
+  --border-dim: 1px solid rgba(0, 136, 48, 0.15);
+  --glow-text: none;
+  --glow-strong: none;
+  --glow-subtle: none;
+}
+
+/* ─── Base Reset ───────────────────────────────────────────────────────────── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* ─── CRT Scan-Line Overlay ────────────────────────────────────────────────── */
+
+body::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 255, 65, 0.015) 2px,
+    rgba(0, 255, 65, 0.015) 4px
+  );
+  animation: scanLineMove var(--scan-line-speed) linear infinite;
+  contain: strict;
+}
+
+body.crt-disabled::after {
+  display: none;
+}
+
+/* ─── App Container ────────────────────────────────────────────────────────── */
+
+.app-container {
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: var(--space-lg);
+  position: relative;
+  min-height: 100vh;
+}
+
+/* ─── Selection ────────────────────────────────────────────────────────────── */
+
+::selection {
+  background: rgba(0, 255, 65, 0.35);
+  color: var(--bg-primary);
+}
+
+/* ─── Focus ────────────────────────────────────────────────────────────────── */
+
+:focus-visible {
+  outline: 3px solid var(--green-primary);
+  outline-offset: 2px;
+  box-shadow: var(--glow-subtle);
+}
+
+/* ─── Scrollbar ────────────────────────────────────────────────────────────── */
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--green-muted) var(--bg-primary);
+}
+
+/* WebKit (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: max(6px, 0.4vw);
+  height: max(6px, 0.4vw);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--green-muted);
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--green-dim);
+}
+
+/* ─── Links ────────────────────────────────────────────────────────────────── */
+
+a {
+  color: var(--green-primary);
+  text-decoration: none;
+  cursor: pointer;
+  transition: text-shadow var(--duration-fast);
+}
+
+a:hover {
+  text-shadow: var(--glow-text);
+}
+
+/* ─── Utility: sr-only ─────────────────────────────────────────────────────── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  :root {
+    --space-lg: 12px;
+    --space-xl: 18px;
+    --space-2xl: 24px;
+    --glow-opacity-subtle: 0.05;
+    --glow-opacity-medium: 0.1;
+  }
+}
+
+@media (max-width: 520px) {
+  :root {
+    --space-lg: 10px;
+    --space-xl: 14px;
+  }
+
+  .app-container {
+    padding: var(--space-md);
+  }
+}
+
+@media (max-width: 400px) {
+  :root {
+    --space-md: 8px;
+    --space-lg: 8px;
+  }
+}
+
+@media (max-width: 320px) {
+  :root {
+    --space-sm: 6px;
+    --space-md: 6px;
+  }
+
+  .app-container {
+    padding: var(--space-sm);
+  }
+}
+
+/* ─── High Contrast ────────────────────────────────────────────────────────── */
+
+@media (prefers-contrast: more) {
+  :root {
+    --glow-text: none;
+    --glow-strong: none;
+    --glow-subtle: none;
+    --glow-opacity-subtle: 0;
+    --glow-opacity-medium: 0;
+    --glow-opacity-strong: 0;
+    --border-glow: 1px solid rgba(0, 255, 65, 0.6);
+    --border-dim: 1px solid rgba(0, 255, 65, 0.4);
+    --border-bright: 1px solid rgba(0, 255, 65, 0.8);
+    --text-muted: #00aa33;
+    --text-dim: #008826;
+  }
+}
+
+/* ─── Forced Colors (Windows High Contrast) ────────────────────────────────── */
+
+@media (forced-colors: active) {
+  :root {
+    --glow-text: none;
+    --glow-strong: none;
+    --glow-subtle: none;
+    --border-glow: 1px solid CanvasText;
+    --border-dim: 1px solid CanvasText;
+    --border-bright: 1px solid CanvasText;
+  }
+
+  body,
+  .app-container,
+  .card,
+  .section {
+    background: Canvas;
+    color: CanvasText;
+    forced-color-adjust: none;
+  }
+
+  .deploy-btn,
+  .toggle,
+  .log-filter-btn,
+  .footer__link,
+  .log-back {
+    border: 1px solid ButtonText;
+    color: ButtonText;
+    background: ButtonFace;
+  }
+
+  .deploy-btn:hover,
+  .toggle:hover,
+  .log-filter-btn:hover {
+    border-color: Highlight;
+    color: Highlight;
+  }
+
+  .status-dot {
+    border: 2px solid CanvasText;
+  }
+
+  .matrix-canvas,
+  body::after {
+    display: none !important;
+  }
+}

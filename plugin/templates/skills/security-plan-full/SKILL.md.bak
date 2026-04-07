@@ -1,0 +1,116 @@
+---
+name: security-plan-full
+description: "Erstellt einen vollständigen Security-Audit-Plan für die gesamte Codebasis. Use when: Sicherheitsaudit gesamtes Projekt, Vulnerability-Scan, OWASP-Prüfung, Penetrationstest-Vorbereitung, Security-Hardening aller Dateien."
+argument-hint: "Optional: Spezifischer Security-Fokus (z.B. Auth, Input Validation, Injection)"
+---
+
+# Security Plan — Gesamte Codebasis
+
+## Zweck
+Erstellt einen vollständigen Security-Audit-Plan, der **jede einzelne Datei** im Projekt auf Sicherheitslücken prüft. Der Plan deckt ab:
+- JEDE Sicherheitslücke in JEDER Datei identifizieren
+- Best-möglichen Fix für jede Lücke planen
+- Input-Validierung und Sanitization
+- Authentication und Authorization Schwächen
+- Injection-Angriffsvektoren (SQL, XSS, Command, Path Traversal)
+- Sensitive Data Exposure und Secrets Management
+- Crash-Resistenz und sichere Fehlerbehandlung
+
+## Wann verwenden
+- Vollständiger Security-Audit des gesamten Projekts
+- Vor einem Security-Review oder Penetrationstest
+- OWASP Top 10 Compliance-Prüfung
+- Projektweites Security-Hardening
+
+## Vorbereitung
+
+1. **Planformat laden**
+   - Lies [planformat.md](../planformat.md) vollständig durch
+   - Verwende den Abschnitt **"Gesamte Codebasis"** als Template
+2. **Gesamte Codebasis scannen**
+   - Erfasse JEDE einzelne Datei im Projekt (keine Ausnahmen)
+   - Notiere für jede Datei: Pfad, relevante Zeilenbereiche, Dateityp
+3. **Security-Kontext verstehen**
+   - Welche externen Schnittstellen gibt es? (APIs, User-Input, File-I/O)
+   - Welche Authentifizierung/Autorisierung wird verwendet?
+   - Wo werden sensitive Daten verarbeitet? (Credentials, Tokens, PII)
+   - Welche Dependencies haben bekannte CVEs?
+4. **Bestehende Infrastruktur prüfen**
+   - Zentrales Logging-System → Security-Events loggen
+   - Config-Dateien → Secrets auslagern
+   - Cache/State-Management → Sichere Speicherung
+
+## Procedure — Planerstellung
+
+### Schritt 1: File-Index erstellen
+Liste JEDE Datei im Projekt mit vollständigem Pfad auf:
+```md
+# Files
+1. - [ ] {vollständiger/datei/pfad}     | Line [N] to [N]
+2. - [ ] {vollständiger/datei/pfad}     | Line [N] to [N]
+...
+N. - [ ] Final Tasks                     | Line [N] to [N]
+```
+
+### Schritt 2: Pro Datei Security-Analyse
+Für jede Datei im Index erstelle eine Kategorie mit:
+
+**Description:** Detaillierte Beschreibung ALLER gefundenen Sicherheitslücken. Jede Lücke mit Severity (Critical/High/Medium/Low), Angriffsvektor und Impact beschreiben.
+
+**TaskList** — folgende Security-Checks MÜSSEN für jede Datei durchgeführt werden:
+- **Injection**: SQL, NoSQL, OS Command, LDAP, XPath, XSS (Reflected/Stored/DOM)
+- **Broken Auth**: Hardcoded Credentials, schwache Token-Generierung, fehlende Session-Invalidierung
+- **Sensitive Data**: Unverschlüsselte Übertragung, Klartext-Speicherung, fehlende Maskierung in Logs
+- **Input Validation**: Fehlende Typ-Prüfung, Boundary-Checks, Whitelist-Validierung
+- **Access Control**: Fehlende Berechtigungsprüfungen, IDOR, Privilege Escalation
+- **Path Traversal**: Unsichere Dateipfad-Konstruktion, fehlende Pfad-Normalisierung
+- **Error Handling**: Information Leakage durch Fehlermeldungen, Stack Traces in Responses
+- **Dependencies**: Veraltete Packages mit bekannten Vulnerabilities
+- Extrem detailliertes DEBUG-Logging FÜR JEDE EINZELNE FUNKTION einbauen (Security-Events!)
+- Gesamte Datei auf konfigurierbare Werte prüfen → in Config-Dateien auslagern
+- Alle Language Keys ins zentrale Language-Pack packen
+- Alle temporären Speicherungen im Cache (sauber sortiert) registrieren
+- Gesamten neuen Code vollständig Crash-Resistent machen, States für Autorecovery speichern
+- Autorecovery so tief integrieren wie möglich
+
+### Schritt 3: Pflicht-Checkpoints pro Kategorie
+JEDE Kategorie MUSS am Ende diese zwei Checkpoints enthalten:
+```md
+- [ ] Geprüft ob ALLE vorherigen Aufgaben auf HÖCHSTER DETAILTIEFE und Produktionsqualität umgesetzt wurden.
+- [ ] Alle Checkmarks DIESER Kategorie überprüft und korrekt mit [x] gesetzt SOFERN DIESE WIRKLICH ZUTREFFEN
+```
+
+### Schritt 4: Final-Sektion
+Am Ende des Plans MUSS exakt diese Final-Tasklist stehen:
+```md
+## FINAL
+### TaskList
+- [ ] Gesamte Implementation dieses Plans überprüft
+- [ ] Alle Checkmarks KORREKT gesetzt
+- [ ] Code Docs und Usage Docs aktualisiert mit Neuerungen / Veränderungen / Entfernungen
+- [ ] Code Docs und Usage Docs nach Aktualisierung vollständig gelesen und ggf. überarbeitet / zusammengefasst bei Doppeleinträgen oder Veraltungen
+- [ ] docs\code_docs\inhalt.md aktualisiert
+- [ ] docs\usage_docs\inhalt.md aktualisiert
+- [ ] version.py ausgeführt NACH ERNEUTER RULES LESUNG
+```
+
+## Qualitätskriterien
+
+- [ ] JEDE Datei im Projekt ist im Plan enthalten — keine Ausnahmen
+- [ ] Jede Sicherheitslücke hat: Severity, Angriffsvektor, Impact, geplanten Fix
+- [ ] OWASP Top 10 wurde für jede Datei systematisch durchgeprüft
+- [ ] Secrets und Credentials sind nirgends hardcoded
+- [ ] Debug-Logging loggt alle Security-relevanten Events
+- [ ] Pflicht-Checkpoints stehen in JEDER Kategorie
+- [ ] Final-Tasklist ist vollständig und unverändert vorhanden
+- [ ] Plan ist länger als 400 Zeilen → in Einzelschritten geschrieben (max. 400 Zeilen pro Edit)
+
+## Umsetzungsregeln (beim Abarbeiten des Plans)
+
+> **KRITISCH:** Diese Regeln gelten IMMER wenn der Plan abgearbeitet wird:
+> - Aufgaben EINZELN abarbeiten und abhaken — NIEMALS mehrere gleichzeitig
+> - Checkmarks LIVE aktuell halten — sofort nach Erledigung setzen
+> - Die letzten 2 Checkpoints jeder Kategorie EINZELN und SORGFÄLTIG prüfen
+> - Erst nach echter Prüfung abhaken — nicht automatisch durchwinken
+> - Bei mehreren Plänen: nur einen Plan gleichzeitig bearbeiten
+> - Security-Fixes immer mit Best Practice implementieren — keine Quick-Hacks

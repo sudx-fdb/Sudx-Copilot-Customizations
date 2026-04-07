@@ -1,0 +1,177 @@
+{
+  "name": "sudx-copilot-customizations",
+  "displayName": "Sudx Copilot Customizations",
+  "description": "Deploy and manage Copilot AI agent customization files for your workspace",
+  "version": "0.6.2",
+  "publisher": "sudx",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "copilot",
+    "ai",
+    "setup",
+    "deployment",
+    "agent",
+    "github"
+  ],
+  "icon": "media/icons/sudx-icon.png",
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "sudx-ai.openPanel",
+        "title": "Sudx CC: Open Setup Panel"
+      },
+      {
+        "command": "sudx-ai.deploy",
+        "title": "Sudx CC: Deploy Configuration",
+        "enablement": "workspaceFolderCount != 0"
+      },
+      {
+        "command": "sudx-ai.resetConfig",
+        "title": "Sudx CC: Reset Configuration"
+      },
+      {
+        "command": "sudx-ai.showLog",
+        "title": "Sudx CC: Show Log"
+      }
+    ],
+    "configuration": [
+      {
+        "title": "Sudx Copilot Customizations",
+        "properties": {
+          "sudx-ai.hooks": {
+            "type": "object",
+            "default": {
+              "sessionContext": true,
+              "protectPlans": true,
+              "postEdit": true,
+              "planReminder": true,
+              "workflowSelector": true
+            },
+            "markdownDescription": "Enable or disable individual automation hooks. Each hook controls a specific automation behavior.",
+            "order": 1,
+            "properties": {
+              "sessionContext": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Inject project context at session start"
+              },
+              "protectPlans": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Protect plan file structure from accidental edits"
+              },
+              "postEdit": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Auto-format and remind about `content.md` after edits"
+              },
+              "planReminder": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Warn about open unfinished plans"
+              },
+              "workflowSelector": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Inject workflow selection reminder on every prompt"
+              }
+            }
+          },
+          "sudx-ai.autoActivateAgent": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Automatically suggest activating the **Sudx Copilot Customizations** agent after deployment",
+            "order": 2
+          },
+          "sudx-ai.deployPath": {
+            "type": "string",
+            "default": ".github",
+            "markdownDescription": "Target directory for deployment (relative to workspace root). Default: `.github`",
+            "pattern": "^[a-zA-Z0-9._\\-/ ]+$",
+            "patternErrorMessage": "Deploy path may only contain letters, numbers, dots, hyphens, slashes, and spaces",
+            "order": 3
+          },
+          "sudx-ai.showStatusBar": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Show the **Sudx CC** button in the status bar",
+            "order": 7
+          },
+          "sudx-ai.logLevel": {
+            "type": "string",
+            "enum": [
+              "debug",
+              "info",
+              "warn",
+              "error"
+            ],
+            "default": "info",
+            "markdownDescription": "Log level for the Sudx CC output channel. Use `debug` for detailed diagnostics.",
+            "order": 8
+          }
+        }
+      },
+      {
+        "title": "Sudx CC — UI & Appearance",
+        "properties": {
+          "sudx-ai.ui.matrixRain": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Enable the **Matrix Rain** canvas background effect",
+            "order": 4
+          },
+          "sudx-ai.ui.crtOverlay": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Enable the **CRT scanline** overlay effect",
+            "order": 5
+          },
+          "sudx-ai.ui.animations": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Enable boot animations, particle effects, and transitions",
+            "order": 6
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "webpack --mode development",
+    "watch": "webpack --mode development --watch",
+    "build": "webpack --mode production",
+    "package": "npm run build",
+    "lint": "eslint src --ext ts",
+    "test": "node ./dist/test/runTest.js",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/test-electron": "^2.3.0",
+    "@vscode/vsce": "^3.7.1",
+    "copy-webpack-plugin": "^12.0.0",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.3.0",
+    "webpack": "^5.90.0",
+    "webpack-cli": "^5.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sudx/sudx-ai-setup"
+  },
+  "license": "MIT",
+  "galleryBanner": {
+    "color": "#1a1a1a",
+    "theme": "dark"
+  }
+}

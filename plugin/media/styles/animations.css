@@ -1,0 +1,326 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sudx Copilot Customizations — Hacker Terminal Animations
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── CRT Scan Line ────────────────────────────────────────────────────────── */
+
+@keyframes scanLineMove {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 100vh; }
+}
+
+/* ─── Phosphor Pulse ───────────────────────────────────────────────────────── */
+
+@keyframes phosphorPulse {
+  0%, 100% { text-shadow: 0 0 6px rgba(0, 255, 65, 0.4); }
+  50%      { text-shadow: 0 0 12px rgba(0, 255, 65, 0.7), 0 0 24px rgba(0, 255, 65, 0.3); }
+}
+
+/* ─── Terminal Cursor Blink ────────────────────────────────────────────────── */
+
+@keyframes terminalBlink {
+  0%, 49%  { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ─── Typewriter ───────────────────────────────────────────────────────────── */
+
+@keyframes typewriter {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+
+.animate-typewriter {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--green-primary);
+  animation:
+    typewriter var(--duration-slow) steps(var(--typewriter-steps, 40)) forwards,
+    terminalBlink 0.8s step-end infinite;
+}
+
+/* ─── Glitch Flicker ───────────────────────────────────────────────────────── */
+
+@keyframes glitchFlicker {
+  0%, 93%, 100% {
+    transform: translate(0);
+    clip-path: none;
+  }
+  94% {
+    transform: translate(-2px, 1px);
+    clip-path: inset(10% 0 60% 0);
+  }
+  95% {
+    transform: translate(2px, -1px);
+    clip-path: inset(40% 0 20% 0);
+  }
+  96% {
+    transform: translate(-1px, -1px);
+    clip-path: none;
+  }
+}
+
+/* ─── Hack Reveal (line appears from left) ─────────────────────────────────── */
+
+@keyframes hackReveal {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+    filter: blur(2px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(3px);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+    filter: blur(0);
+  }
+}
+
+.animate-hack-reveal {
+  animation: hackReveal var(--duration-slow) var(--ease-out) both;
+}
+
+/* ─── Matrix Fade ──────────────────────────────────────────────────────────── */
+
+@keyframes matrixFade {
+  0% {
+    opacity: 0;
+    text-shadow: none;
+  }
+  50% {
+    opacity: 0.7;
+    text-shadow: 0 0 20px rgba(0, 255, 65, 0.8);
+  }
+  100% {
+    opacity: 1;
+    text-shadow: 0 0 6px rgba(0, 255, 65, 0.4);
+  }
+}
+
+.animate-matrix-fade {
+  animation: matrixFade var(--duration-slow) var(--ease-out) both;
+}
+
+/* ─── Status Pulse ─────────────────────────────────────────────────────────── */
+
+@keyframes statusPulse {
+  0%, 100% {
+    box-shadow: 0 0 4px currentColor, 0 0 8px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 8px currentColor, 0 0 16px currentColor, 0 0 24px currentColor;
+  }
+}
+
+/* ─── Progress Glow ────────────────────────────────────────────────────────── */
+
+@keyframes progressGlow {
+  0%   { box-shadow: 0 0 5px var(--green-glow); }
+  50%  { box-shadow: 0 0 15px var(--green-glow), 0 0 30px rgba(0, 255, 65, 0.2); }
+  100% { box-shadow: 0 0 5px var(--green-glow); }
+}
+
+/* ─── Error Shake ──────────────────────────────────────────────────────────────────── */
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-3px); }
+  40%      { transform: translateX(3px); }
+  60%      { transform: translateX(-2px); }
+  80%      { transform: translateX(2px); }
+}
+
+/* ─── Success Flash ────────────────────────────────────────────────────────────────── */
+
+@keyframes successFlash {
+  0%   { box-shadow: 0 0 0 transparent; }
+  30%  { box-shadow: 0 0 20px var(--green-glow), 0 0 40px rgba(0, 255, 65, 0.15); }
+  100% { box-shadow: 0 0 0 transparent; }
+}
+
+/* ─── Count Pop ────────────────────────────────────────────────────────────── */
+
+@keyframes countPop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.15); text-shadow: var(--glow-strong); }
+  100% { transform: scale(1); }
+}
+
+/* ─── Log Slide In ─────────────────────────────────────────────────────────── */
+
+@keyframes logSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-15px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ─── Fade Slide Up ────────────────────────────────────────────────────────── */
+
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp var(--duration-slow) var(--ease-out) both;
+}
+
+/* ─── Fade Slide Left ──────────────────────────────────────────────────────── */
+
+@keyframes fadeSlideLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ─── Particle Burst ───────────────────────────────────────────────────────── */
+
+@keyframes particleBurst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+    z-index: 100;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx, 10px), var(--dy, -10px)) scale(0);
+    z-index: 100;
+  }
+}
+
+/* ─── Subtle Glow Flash ───────────────────────────────────────────────────── */
+
+@keyframes subtleGlow {
+  0%   { box-shadow: 0 0 0 transparent; }
+  50%  { box-shadow: 0 0 12px var(--green-glow); }
+  100% { box-shadow: 0 0 0 transparent; }
+}
+
+/* ─── Boot Line Reveal ─────────────────────────────────────────────────────── */
+
+@keyframes bootReveal {
+  0%   { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.boot-line {
+  opacity: 0;
+  animation: bootReveal var(--boot-reveal-speed, 200ms) var(--ease-out) forwards;
+  animation-delay: var(--boot-delay, 0ms);
+}
+
+/* ─── Ripple Glow ──────────────────────────────────────────────────────────── */
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 255, 65, 0.3) 0%, transparent 70%);
+  transform: scale(0);
+  animation: rippleExpand var(--ripple-speed, 600ms) var(--ease-out) forwards;
+  pointer-events: none;
+}
+
+.ripple-fast  { --ripple-speed: 400ms; }
+.ripple-normal { --ripple-speed: 600ms; }
+.ripple-slow  { --ripple-speed: 900ms; }
+
+@keyframes rippleExpand {
+  to {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* ─── Collapse / Expand ────────────────────────────────────────────────────── */
+
+@keyframes collapseDown {
+  0%   { opacity: 0; max-height: 0; }
+  100% { opacity: 1; max-height: var(--collapse-max-height, 1000px); }
+}
+
+/* ─── Page Transition Fade In ──────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  0%   { opacity: 0; transform: translateY(-4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Warning Pulse (partial success) ──────────────────────────────────────── */
+
+@keyframes warningPulse {
+  0%, 100% {
+    box-shadow: 0 0 4px var(--yellow-glow), 0 0 8px var(--yellow-glow);
+  }
+  50% {
+    box-shadow: 0 0 8px var(--yellow-glow), 0 0 16px var(--yellow-glow), 0 0 24px var(--yellow-glow);
+  }
+}
+
+/* ─── Animation Pause Utility ──────────────────────────────────────────────── */
+
+.anim-paused {
+  animation-play-state: paused !important;
+}
+
+/* ─── Reduced Motion ───────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  /* Disable intense animations */
+  .animate-typewriter,
+  .animate-hack-reveal,
+  .boot-line,
+  .ripple {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Remove matrix rain and CRT overlay */
+  .matrix-canvas {
+    display: none !important;
+  }
+
+  body::after {
+    animation: none !important;
+  }
+
+  /* Disable glitch, particle, shake, success flash, count pop */
+  @keyframes glitchFlicker { 0%, 100% { transform: none; clip-path: none; } }
+  @keyframes particleBurst { 0%, 100% { opacity: 0; } }
+  @keyframes errorShake { 0%, 100% { transform: none; } }
+  @keyframes successFlash { 0%, 100% { box-shadow: none; } }
+  @keyframes countPop { 0%, 100% { transform: scale(1); } }
+  @keyframes warningPulse { 0%, 100% { box-shadow: none; } }
+
+  /* matrixFade: simple opacity instead of removal */
+  @keyframes matrixFade {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  /* Allow short transitions for state changes */
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.1ms !important;
+  }
+}

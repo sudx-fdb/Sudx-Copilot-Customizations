@@ -1,0 +1,94 @@
+---
+name: documentation-full
+description: "Erstellt oder aktualisiert vollständige Projekt-Dokumentation für GitHub. Use when: README schreiben, GitHub-Docs erstellen, Projekt-Dokumentation überarbeiten, vollständige Doku erstellen, README aktualisieren, Contributing Guide."
+argument-hint: "Optional: Spezifischer Doku-Fokus (z.B. README, Contributing, Changelog)"
+---
+
+# Full Documentation — GitHub-Ready
+
+## Zweck
+Erstellt oder aktualisiert die **vollständige Projekt-Dokumentation** für GitHub und externe Nutzer. Umfasst README, Contributing Guide, und alle weiteren Docs die für ein GitHub-Repository relevant sind. Sowohl Code-Docs als auch Usage-Docs werden berücksichtigt.
+
+## Wann verwenden
+- README soll erstellt oder komplett überarbeitet werden
+- Projekt-Dokumentation für GitHub-Veröffentlichung vorbereiten
+- Vollständige Dokumentation aller Art aktualisieren
+- Alle Docs nach größeren Changes nachziehen
+
+## Dokumentationsregeln
+
+### Code-Docs (aus [documentation.instructions.md](../../instructions/documentation.instructions.md)):
+- NUR codebezogene Informationen
+- Vermeide Doppeleinträge
+- Kurz, eindeutig und pfadbezogen
+- Codebeispiele wo technisch sinnvoll
+- Keine Endnutzer-Bedienhinweise
+- `inhalt.md` Format: `{relative file path} | {Kurzbeschreibung}`
+
+### Usage-Docs (aus [documentation.instructions.md](../../instructions/documentation.instructions.md)):
+- NUR Nutzung, Verhalten und Funktion aus Sicht des Programms/Nutzers
+- KEINE Codebeispiele
+- KEINE Implementierungsdetails
+- Beschreibe was eine Funktion tut und wie sie sich für Nutzer auswirkt
+- `inhalt.md` Format: `{relative file path} | {Kurzbeschreibung}`
+- Keine technischen Referenzen auf interne Code-Strukturen
+
+## Procedure
+
+### Schritt 1: Projekt verstehen
+1. Gesamte Codebasis scannen und Projektstruktur erfassen
+2. Hauptfunktionalität und Zweck des Projekts identifizieren
+3. Technologie-Stack und Dependencies auflisten
+4. Bestehende Dokumentation lesen und bewerten
+
+### Schritt 2: README erstellen/aktualisieren
+Ein vollständiges README muss enthalten:
+- **Projektname und Beschreibung**: Was macht das Projekt?
+- **Features**: Hauptfunktionalitäten als Liste
+- **Voraussetzungen**: System-Requirements, Dependencies
+- **Installation**: Schritt-für-Schritt Setup-Anleitung
+- **Konfiguration**: Welche Config-Optionen gibt es?
+- **Nutzung**: Wie verwendet man das Projekt? (Grundlegende Beispiele)
+- **Projektstruktur**: Ordnerstruktur mit Erklärungen
+- **Contributing**: Wie kann man beitragen? (oder Verweis auf CONTRIBUTING.md)
+- **Lizenz**: Welche Lizenz gilt?
+
+### Schritt 3: Code-Docs aktualisieren
+Für jede Datei/jedes Modul im Projekt:
+1. Technische Funktionsweise dokumentieren
+2. Funktionen, Klassen, Parameter, Rückgabewerte
+3. Abhängigkeiten und Datenflüsse
+4. Konfigurationsparameter und Fehlerbehandlung
+5. `docs/code_docs/inhalt.md` aktualisieren
+
+### Schritt 4: Usage-Docs aktualisieren
+Für jede nutzersichtbare Funktionalität:
+1. Was tut die Funktion aus Nutzersicht?
+2. Wie wird sie aufgerufen/genutzt?
+3. Welche Auswirkungen hat sie?
+4. Welche Optionen/Parameter gibt es?
+5. `docs/usage_docs/inhalt.md` aktualisieren
+
+### Schritt 5: Weitere GitHub-Docs prüfen
+- CONTRIBUTING.md — falls vorhanden, aktualisieren
+- CHANGELOG.md — falls vorhanden, aktualisieren
+- LICENSE — Vorhandensein prüfen
+- .github/ Templates (Issue, PR) — falls vorhanden, prüfen
+
+### Schritt 6: Qualitätsprüfung
+- [ ] README ist vollständig und aktuell
+- [ ] Keine Doppeleinträge in Code-Docs oder Usage-Docs
+- [ ] Code-Docs enthalten keine Endnutzer-Hinweise
+- [ ] Usage-Docs enthalten keine Codebeispiele oder Implementierungsdetails
+- [ ] Beide `inhalt.md` Dateien sind aktuell
+- [ ] Alle Links in der Dokumentation funktionieren
+- [ ] Keine veralteten Features dokumentiert
+- [ ] Projektstruktur im README stimmt mit dem tatsächlichen Projekt überein
+
+### Schritt 7: Gegenlesen
+- Gesamte Dokumentation vollständig durchlesen
+- Doppeleinträge zwischen Code-Docs und Usage-Docs finden und bereinigen
+- Widersprüche zwischen README und Detail-Docs identifizieren und beheben
+- Veraltete Informationen entfernen
+- `docs/code_docs/inhalt.md` final aktualisieren
+- `docs/usage_docs/inhalt.md` final aktualisieren
