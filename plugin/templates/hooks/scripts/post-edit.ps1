@@ -72,7 +72,7 @@ try {
 
     if ($messages.Count -gt 0) {
         $msg = $messages -join "`n"
-        Write-Output (@{ systemMessage = $msg } | ConvertTo-Json -Compress)
+        Write-Output (@{ hookSpecificOutput = @{ hookEventName = "PostToolUse"; additionalContext = $msg } } | ConvertTo-Json -Compress -Depth 3)
     } else {
         Write-Output '{"continue":true}'
     }

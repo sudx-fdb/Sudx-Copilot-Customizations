@@ -1,5 +1,5 @@
 # SessionStart Hook: Inject permanent AI context from .ai_workfolder/context_files/
-# Reads all context files and returns them as systemMessage
+# Reads all context files and returns them as hookSpecificOutput.additionalContext
 
 $ErrorActionPreference = "SilentlyContinue"
 
@@ -38,6 +38,6 @@ if ($parts.Count -eq 0) {
 
 $message = "Permanent project context from .ai_workfolder/context_files/:`n`n" + ($parts -join "`n`n")
 $message += "`n`nREMINDER: If open plans exist, execute them first. Read skills + instructions before any implementation. One checkmark per edit."
-$out = @{ systemMessage = $message } | ConvertTo-Json -Compress
+$out = @{ hookSpecificOutput = @{ hookEventName = "SessionStart"; additionalContext = $message } } | ConvertTo-Json -Compress -Depth 3
 Write-Output $out
 exit 0

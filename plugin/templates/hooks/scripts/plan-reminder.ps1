@@ -69,13 +69,7 @@ if ($openPlans.Count -gt 0) {
     $msg += "- Stop working before all categories + FINAL are done`n"
     $msg += "`nENFORCEMENT: The protect-workflow hook WILL REJECT any edit that checks off more than 1 item at once. You MUST make ONE edit per checkmark.`n"
     $msg += "`nA plan is an assignment. You execute it. Completely. Without asking."
-    $out = @{
-        systemMessage = $msg
-        hookSpecificOutput = @{
-            hookEventName = "UserPromptSubmit"
-            additionalContext = $msg
-        }
-    } | ConvertTo-Json -Compress -Depth 3
+    $out = @{ systemMessage = $msg } | ConvertTo-Json -Compress
     Write-Output $out
 } else {
     $out = @{ continue = $true } | ConvertTo-Json -Compress

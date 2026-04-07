@@ -111,7 +111,7 @@ try:
         # REJECT: Batch checkmark edits
         if total_new_checks > 1:
             vn = get_violation_count()
-            decision = 'reject'
+            decision = 'deny'
             reason = (
                 f'VIOLATION #{vn} of execute_plan.instructions.md!\n'
                 f'You attempted to check off {total_new_checks} checkmarks in a SINGLE edit. This is STRICTLY FORBIDDEN.\n\n'
@@ -133,7 +133,7 @@ try:
         # REJECT: Task deletion
         if decision == 'allow' and total_tasks_removed > 0:
             vn = get_violation_count()
-            decision = 'reject'
+            decision = 'deny'
             reason = (
                 f'VIOLATION #{vn} of execute_plan.instructions.md!\n'
                 f'You attempted to REMOVE {total_tasks_removed} unchecked task(s) from a plan file. This is STRICTLY FORBIDDEN.\n\n'

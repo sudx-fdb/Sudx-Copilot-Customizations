@@ -108,7 +108,7 @@ try {
         $msg += "`nA plan is an assignment. Execute it. Completely. Without asking.`n"
         $msg += "The protect-workflow hook WILL REJECT any edit that checks off more than 1 item at once."
 
-        $out = @{ systemMessage = $msg } | ConvertTo-Json -Compress
+        $out = @{ hookSpecificOutput = @{ hookEventName = "PostToolUse"; additionalContext = $msg } } | ConvertTo-Json -Compress -Depth 3
         Write-Output $out
     } else {
         # Non-plan file read — check if open plans exist and warn
@@ -125,7 +125,7 @@ try {
                 $msg += "`nYour current task is: $currentTask"
             }
 
-            $out = @{ systemMessage = $msg } | ConvertTo-Json -Compress
+            $out = @{ hookSpecificOutput = @{ hookEventName = "PostToolUse"; additionalContext = $msg } } | ConvertTo-Json -Compress -Depth 3
             Write-Output $out
         } else {
             Write-Output '{"continue":true}'

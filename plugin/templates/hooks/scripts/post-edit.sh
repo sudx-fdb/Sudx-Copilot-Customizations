@@ -57,7 +57,7 @@ except Exception:
     pass
 
 if messages:
-    print(json.dumps({'systemMessage': chr(10).join(messages)}))
+    print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PostToolUse', 'additionalContext': chr(10).join(messages)}}))
 else:
     print(json.dumps({'continue': True}))
 " 2>/dev/null || echo '{"continue":true}'

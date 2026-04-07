@@ -119,7 +119,7 @@ try {
             # REJECT: Batch checkmark edits (>1 checkbox changed in single edit)
             if ($totalNewChecks -gt 1) {
                 $violationNum = Get-ViolationCount
-                $decision = "reject"
+                $decision = "deny"
                 $reason = "VIOLATION #$violationNum of execute_plan.instructions.md!`n"
                 $reason += "You attempted to check off $totalNewChecks checkmarks in a SINGLE edit. This is STRICTLY FORBIDDEN.`n`n"
                 $reason += "RULES YOU MUST FOLLOW:`n"
@@ -140,7 +140,7 @@ try {
             # REJECT: Task deletion (removing unchecked items = skipping tasks)
             if ($decision -eq "allow" -and $totalTasksRemoved -gt 0) {
                 $violationNum = Get-ViolationCount
-                $decision = "reject"
+                $decision = "deny"
                 $reason = "VIOLATION #$violationNum of execute_plan.instructions.md!`n"
                 $reason += "You attempted to REMOVE $totalTasksRemoved unchecked task(s) from a plan file. This is STRICTLY FORBIDDEN.`n`n"
                 $reason += "Plan tasks MUST NOT be deleted or skipped. Every task must be completed and checked off individually.`n`n"

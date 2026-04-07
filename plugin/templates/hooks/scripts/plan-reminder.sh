@@ -70,7 +70,7 @@ if open_plans:
     msg += '- Stop working before all categories + FINAL are done\\n'
     msg += '\\nENFORCEMENT: The protect-workflow hook WILL REJECT any edit that checks off more than 1 item at once. You MUST make ONE edit per checkmark.\\n'
     msg += '\\nA plan is an assignment. You execute it. Completely. Without asking.'
-    print(json.dumps({'systemMessage': msg, 'hookSpecificOutput': {'hookEventName': 'UserPromptSubmit', 'additionalContext': msg}}))
+    print(json.dumps({'systemMessage': msg}))
 else:
     print(json.dumps({'continue': True}))
 " 2>/dev/null || echo '{"continue":true}'

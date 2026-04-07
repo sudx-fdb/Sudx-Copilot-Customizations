@@ -34,7 +34,7 @@ AGENT RULES:
 - Maximum code quality, crash-resistant, production-ready
 - Non-project files go to .ai_workfolder/'''
 
-print(json.dumps({'systemMessage': msg, 'hookSpecificOutput': {'hookEventName': 'UserPromptSubmit', 'additionalContext': msg}}))
+print(json.dumps({'systemMessage': msg}))
 " 2>/dev/null || echo '{"continue":true}'
 else
     echo '{"continue":true}'

@@ -46,6 +46,13 @@ const HOOK_DEFINITIONS: Omit<IHookDefinition, 'enabled'>[] = [
     configFile: HOOK_FILE_MAP.workflowSelector.config,
     scriptFiles: HOOK_FILE_MAP.workflowSelector.scripts,
   },
+  {
+    name: 'protectWorkflow',
+    displayName: STRINGS.HOOK_PROTECT_WORKFLOW,
+    description: STRINGS.HOOK_PROTECT_WORKFLOW_DESC,
+    configFile: HOOK_FILE_MAP.protectWorkflow.config,
+    scriptFiles: HOOK_FILE_MAP.protectWorkflow.scripts,
+  },
 ];
 
 const VALID_HOOK_NAMES = HOOK_DEFINITIONS.map((h) => h.name);

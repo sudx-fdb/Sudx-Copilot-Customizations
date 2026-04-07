@@ -1,6 +1,6 @@
 #!/bin/bash
 # SessionStart Hook: Inject permanent AI context from .ai_workfolder/context_files/
-# Reads all context files and returns them as systemMessage
+# Reads all context files and returns them as hookSpecificOutput.additionalContext
 
 # Consume stdin (required by hook contract)
 cat > /dev/null
@@ -35,7 +35,7 @@ if not parts:
 else:
     msg = 'Permanent project context from .ai_workfolder/context_files/:\n\n' + '\n\n'.join(parts)
     msg += '\n\nREMINDER: If open plans exist, execute them first. Read skills + instructions before any implementation. One checkmark per edit.'
-    print(json.dumps({'systemMessage': msg}))
+    print(json.dumps({'hookSpecificOutput': {'hookEventName': 'SessionStart', 'additionalContext': msg}}))
 " 2>/dev/null || echo '{"continue":true}'
 else
     echo '{"continue":true}'

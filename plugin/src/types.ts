@@ -33,6 +33,7 @@ export interface IHookConfig {
   postEdit: boolean;
   planReminder: boolean;
   workflowSelector: boolean;
+  protectWorkflow: boolean;
   [key: string]: boolean;
 }
 

@@ -35,6 +35,7 @@ export const DEFAULT_HOOKS: IHookConfig = {
   postEdit: true,
   planReminder: true,
   workflowSelector: true,
+  protectWorkflow: true,
 };
 
 export const VALID_HOOKS: string[] = Object.keys(DEFAULT_HOOKS);
@@ -169,6 +170,15 @@ export const HOOK_FILE_MAP: Record<string, { config: string; scripts: string[] }
       'hooks/scripts/workflow-selector.sh',
     ],
   },
+  protectWorkflow: {
+    config: 'hooks/protect-workflow.json',
+    scripts: [
+      'hooks/scripts/protect-workflow-pre.ps1',
+      'hooks/scripts/protect-workflow-pre.sh',
+      'hooks/scripts/protect-workflow-post.ps1',
+      'hooks/scripts/protect-workflow-post.sh',
+    ],
+  },
 };
 
 // ─── User-Facing Strings (Language Pack) ─────────────────────────────────────
@@ -238,6 +248,8 @@ export const STRINGS = {
   HOOK_PLAN_REMINDER_DESC: 'Warn about unfinished plans',
   HOOK_WORKFLOW_SELECTOR: 'Workflow Selector',
   HOOK_WORKFLOW_SELECTOR_DESC: 'Inject workflow selection reminder on every prompt',
+  HOOK_PROTECT_WORKFLOW: 'Workflow Protection',
+  HOOK_PROTECT_WORKFLOW_DESC: 'Enforce single-checkmark-per-edit rule for plan files',
 
   // Agent
   AGENT_TOGGLE_LABEL: 'Auto-activate Sudx Copilot Customizations Agent after deployment',

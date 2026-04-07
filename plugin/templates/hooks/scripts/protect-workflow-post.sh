@@ -88,7 +88,7 @@ try:
             '\\nA plan is an assignment. Execute it. Completely. Without asking.\\n'
             'The protect-workflow hook WILL REJECT any edit that checks off more than 1 item at once.'
         )
-        print(json.dumps({'systemMessage': msg}))
+        print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PostToolUse', 'additionalContext': msg}}))
     else:
         # Non-plan file — check for open plans
         script_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in dir() else os.getcwd()
@@ -111,7 +111,7 @@ try:
             msg = f'WARNING: You are reading a non-plan file while an open plan exists ({rel_path}). Return to plan execution immediately unless this read is required for a plan task.'
             if current_task:
                 msg += f'\\nYour current task is: {current_task}'
-            print(json.dumps({'systemMessage': msg}))
+            print(json.dumps({'hookSpecificOutput': {'hookEventName': 'PostToolUse', 'additionalContext': msg}}))
         else:
             print(json.dumps({'continue': True}))
 except:

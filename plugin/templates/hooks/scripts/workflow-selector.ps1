@@ -30,12 +30,6 @@ $msg += "- Execute plans WITHOUT interruption - never ask 'Should I continue?'`n
 $msg += "- Maximum code quality, crash-resistant, production-ready`n"
 $msg += "- Non-project files go to .ai_workfolder/"
 
-$out = @{
-    systemMessage = $msg
-    hookSpecificOutput = @{
-        hookEventName = "UserPromptSubmit"
-        additionalContext = $msg
-    }
-} | ConvertTo-Json -Compress -Depth 3
+$out = @{ systemMessage = $msg } | ConvertTo-Json -Compress
 Write-Output $out
 exit 0
