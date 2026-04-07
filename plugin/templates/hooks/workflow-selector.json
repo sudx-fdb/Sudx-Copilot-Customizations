@@ -6,7 +6,7 @@
         "windows": "powershell -ExecutionPolicy Bypass -NoProfile -File .github/hooks/scripts/workflow-selector.ps1",
         "linux": "bash .github/hooks/scripts/workflow-selector.sh",
         "osx": "bash .github/hooks/scripts/workflow-selector.sh",
-        "timeout": 5
+        "timeout": 10
       }
     ]
   }

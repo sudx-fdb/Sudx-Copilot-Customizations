@@ -6,7 +6,7 @@
         "windows": "powershell -ExecutionPolicy Bypass -NoProfile -File .github/hooks/scripts/protect-workflow-pre.ps1",
         "linux": "bash .github/hooks/scripts/protect-workflow-pre.sh",
         "osx": "bash .github/hooks/scripts/protect-workflow-pre.sh",
-        "timeout": 5
+        "timeout": 10
       }
     ],
     "PostToolUse": [
@@ -15,7 +15,7 @@
         "windows": "powershell -ExecutionPolicy Bypass -NoProfile -File .github/hooks/scripts/protect-workflow-post.ps1",
         "linux": "bash .github/hooks/scripts/protect-workflow-post.sh",
         "osx": "bash .github/hooks/scripts/protect-workflow-post.sh",
-        "timeout": 5
+        "timeout": 10
       }
     ]
   }

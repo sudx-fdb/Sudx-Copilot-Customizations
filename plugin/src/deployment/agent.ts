@@ -70,6 +70,9 @@ export class AgentActivator {
       return;
     }
 
+    // Ensure Copilot Memory is enabled
+    await this.ensureCopilotMemory();
+
     // Open Copilot Chat with Sudx Copilot Customizations agent mode selected
     try {
       await vscode.commands.executeCommand('workbench.action.chat.open', {
@@ -121,5 +124,21 @@ export class AgentActivator {
       activated: deployed && !optedOut,
       optedOut,
     };
+  }
+
+  private async ensureCopilotMemory(): Promise<void> {
+    const SETTING = 'github.copilot.chat.copilotMemory.enabled';
+    try {
+      const config = vscode.workspace.getConfiguration();
+      const current = config.get<boolean>(SETTING);
+      if (current === true) {
+        this.logger.debug(MODULE, 'Copilot Memory already enabled');
+        return;
+      }
+      await config.update(SETTING, true, vscode.ConfigurationTarget.Global);
+      this.logger.info(MODULE, 'Copilot Memory enabled via settings');
+    } catch (err) {
+      this.logger.warn(MODULE, 'Failed to enable Copilot Memory', err);
+    }
   }
 }
