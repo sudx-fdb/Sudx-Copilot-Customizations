@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Sudx Copilot Customizations — VSIX Build & Version Control Utility.
 
-Handles semantic versioning (Fix/NewFunction/UserapprovedBigBump), VSIX packaging,
-git push, and GitHub release management for the Sudx Copilot Customizations VS Code extension.
+Handles semantic versioning (Fix/NewFunction/MayjorUpdate), VSIX packaging, 
+and version history management for the Sudx Copilot Customizations VS Code extension.
 
 Build structure:
     .builds/{version}-{name}-{tag}-sudxai.vsix      Aktuelle VSIX (immer nur eine)
