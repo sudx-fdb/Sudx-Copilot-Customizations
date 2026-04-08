@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "windows": "powershell -ExecutionPolicy Bypass -NoProfile -File .github/hooks/scripts/crawl4ai-guard.ps1",
+        "linux": "bash .github/hooks/scripts/crawl4ai-guard.sh",
+        "osx": "bash .github/hooks/scripts/crawl4ai-guard.sh",
+        "timeout": 10
+      }
+    ]
+  }
+}

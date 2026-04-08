@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { IStatusBarState } from './types';
+import { IStatusBarState, IMcpHealthStatus } from './types';
 import { SudxLogger } from './utils/logger';
 import {
   COMMANDS,
@@ -9,6 +9,7 @@ import {
   CONFIG_SECTION,
   CONFIG_KEYS,
   UI_CONSTANTS,
+  STRINGS,
 } from './constants';
 
 const MODULE = 'StatusBar';
@@ -21,6 +22,7 @@ export class StatusBarManager {
   private resetTimer: ReturnType<typeof setTimeout> | null = null;
   private _fileCount = 0;
   private _lastDeploy = '';
+  private _mcpHealthStatuses: IMcpHealthStatus[] = [];
 
   constructor(logger: SudxLogger) {
     this.logger = logger;
@@ -96,6 +98,12 @@ export class StatusBarManager {
     this.logger.debug(MODULE, 'Deploy info updated', { fileCount, lastDeploy });
   }
 
+  updateMcpHealth(statuses: IMcpHealthStatus[]): void {
+    this._mcpHealthStatuses = statuses;
+    this.applyState(); // Refresh tooltip with MCP health
+    this.logger.debug(MODULE, 'MCP health updated in status bar', { count: statuses.length });
+  }
+
   getDisposable(): vscode.Disposable {
     return vscode.Disposable.from(this.statusBarItem, this.configDisposable);
   }
@@ -115,11 +123,15 @@ export class StatusBarManager {
 
     // Tooltip with details
     const baseTooltip = STATUS_BAR_TOOLTIP[this.currentState.state];
+    const parts: string[] = [baseTooltip];
     if (this._fileCount > 0 && this._lastDeploy) {
-      this.statusBarItem.tooltip = `${baseTooltip}\n${this._fileCount} files, last: ${this._lastDeploy}`;
-    } else {
-      this.statusBarItem.tooltip = baseTooltip;
+      parts.push(`${this._fileCount} files, last: ${this._lastDeploy}`);
     }
+    if (this._mcpHealthStatuses.length > 0) {
+      const mcpLine = STRINGS.MCP_HEALTH_SUMMARY(this._mcpHealthStatuses);
+      parts.push(mcpLine);
+    }
+    this.statusBarItem.tooltip = parts.join('\n');
 
     switch (this.currentState.state) {
       case 'deployed':

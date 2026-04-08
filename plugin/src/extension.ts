@@ -8,6 +8,10 @@ import { TemplateScanner } from './deployment/scanner';
 import { FileCopier } from './deployment/copier';
 import { HookManager } from './deployment/hooks';
 import { AgentActivator } from './deployment/agent';
+import { McpDeployer } from './deployment/mcpDeployer';
+import { McpLifecycleManager } from './mcp/lifecycleManager';
+import { McpHealthMonitor } from './mcp/healthMonitor';
+import { McpTokenManager } from './mcp/tokenManager';
 import { DeploymentEngine } from './deployment/engine';
 import { MessageHandler } from './webview/messaging';
 import { SudxWebviewProvider } from './webview/provider';
@@ -18,6 +22,8 @@ import { STRINGS } from './constants';
 const MODULE = 'Extension';
 
 let logger: SudxLogger;
+let mcpLifecycle: McpLifecycleManager | null = null;
+let mcpHealth: McpHealthMonitor | null = null;
 
 export function activate(context: vscode.ExtensionContext): void {
   // ── 1. Logger ──────────────────────────────────────────────────────────
@@ -88,6 +94,16 @@ export function activate(context: vscode.ExtensionContext): void {
     const agentActivator = new AgentActivator(logger, settings, state, paths);
     logger.debug(MODULE, 'AgentActivator initialized');
 
+    logger.debug(MODULE, 'Initializing McpDeployer...');
+    const tokenManager = new McpTokenManager(logger, context.secrets);
+    const mcpDeployer = new McpDeployer(logger, fileOps, paths, tokenManager);
+    logger.debug(MODULE, 'McpDeployer initialized');
+
+    logger.debug(MODULE, 'Initializing McpLifecycleManager...');
+    const lifecycleManager = new McpLifecycleManager(logger);
+    mcpLifecycle = lifecycleManager;
+    logger.debug(MODULE, 'McpLifecycleManager initialized');
+
     logger.debug(MODULE, 'Initializing DeploymentEngine...');
     const engine = new DeploymentEngine(
       logger,
@@ -96,7 +112,9 @@ export function activate(context: vscode.ExtensionContext): void {
       copier,
       hookManager,
       agentActivator,
-      state
+      mcpDeployer,
+      state,
+      settings
     );
     logger.debug(MODULE, 'DeploymentEngine initialized');
 
@@ -114,7 +132,8 @@ export function activate(context: vscode.ExtensionContext): void {
       settings,
       state,
       scanner,
-      context
+      context,
+      tokenManager
     );
     logger.debug(MODULE, 'SudxWebviewProvider initialized');
 
@@ -152,12 +171,39 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     });
 
+    // ── 6b. Health Monitor ─────────────────────────────────────────────
+    logger.debug(MODULE, 'Initializing McpHealthMonitor...');
+    const healthIntervalMs = settings.getMcpHealthCheckInterval() * 1000;
+    const healthMonitor = new McpHealthMonitor(logger, healthIntervalMs);
+    mcpHealth = healthMonitor;
+
+    // Restore cached health on startup
+    const cachedHealth = state.getMcpHealthCache();
+    if (cachedHealth.length > 0) {
+      healthMonitor.restoreFromCache(cachedHealth);
+      statusBar.updateMcpHealth(cachedHealth);
+      logger.debug(MODULE, 'MCP health restored from cache');
+    }
+
+    // Wire health changes to status bar + cache
+    healthMonitor.onHealthChanged((statuses) => {
+      statusBar.updateMcpHealth(statuses);
+      state.setMcpHealthCache(statuses);
+    });
+
+    healthMonitor.start();
+    context.subscriptions.push(healthMonitor);
+    logger.debug(MODULE, 'McpHealthMonitor started');
+
     // ── 7. Commands ────────────────────────────────────────────────────
     logger.debug(MODULE, 'Initializing CommandRegistry...');
     const commands = new CommandRegistry(
       logger,
       settings,
       engine,
+      mcpDeployer,
+      lifecycleManager,
+      state,
       webviewProvider,
       statusBar,
       context
@@ -176,6 +222,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
 export function deactivate(): void {
   try {
+    if (mcpHealth) {
+      mcpHealth.dispose();
+      mcpHealth = null;
+    }
+    if (mcpLifecycle) {
+      mcpLifecycle.dispose();
+      mcpLifecycle = null;
+    }
     if (logger) {
       logger.debug(MODULE, 'deactivate() called — cleaning up extension');
       logger.info(MODULE, STRINGS.LOG_EXTENSION_DEACTIVATED);

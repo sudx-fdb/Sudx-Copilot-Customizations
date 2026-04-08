@@ -55,6 +55,23 @@ foreach ($dir in $scanDirs) {
 if ($openPlans.Count -gt 0) {
     $planList = $openPlans -join "`n"
     $msg = "OPEN PLANS found! Complete these FULLY before starting new tasks:`n`n" + $planList
+
+    # MCP status context
+    $mcpConfigPath = Join-Path (Join-Path $root ".vscode") "mcp.json"
+    if (Test-Path $mcpConfigPath) {
+        try {
+            $mcpContent = Get-Content $mcpConfigPath -Raw
+            $mcpJson = $mcpContent | ConvertFrom-Json
+            $mcpServerCount = 0
+            if ($mcpJson.PSObject.Properties["mcpServers"]) {
+                $mcpServerCount = ($mcpJson.mcpServers.PSObject.Properties | Measure-Object).Count
+            }
+            $msg += "`n`nMCP: $mcpServerCount servers configured in .vscode/mcp.json"
+        } catch {
+            $msg += "`n`nMCP: .vscode/mcp.json exists but could not be parsed"
+        }
+    }
+
     $msg += "`n`nBEFORE WORKING: Read .github/skills/{plan-type}/SKILL.md AND .github/instructions/execute_plan.instructions.md"
     $msg += "`n`nCRITICAL RULES FOR PLAN EXECUTION:`n"
     $msg += "`nYOU MUST:`n"

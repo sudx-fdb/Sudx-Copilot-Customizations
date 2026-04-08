@@ -1,0 +1,40 @@
+{
+  "_sudxMeta": {
+    "version": "1.0.0",
+    "deployDate": null,
+    "managedServers": ["playwright", "figma", "crawl4ai"]
+  },
+  "mcpServers": {
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest"
+      ]
+    },
+    "figma": {
+      "command": "npx",
+      "args": [
+        "@thirdstrandstudio/mcp-figma",
+        "--figma-token",
+        "${input:figmaApiToken}"
+      ]
+    },
+    "crawl4ai": {
+      "url": "${input:crawl4aiEndpoint}"
+    }
+  },
+  "inputs": [
+    {
+      "id": "figmaApiToken",
+      "type": "promptString",
+      "description": "Figma Personal Access Token (from https://www.figma.com/developers/api#access-tokens)",
+      "password": true
+    },
+    {
+      "id": "crawl4aiEndpoint",
+      "type": "promptString",
+      "description": "Crawl4ai MCP SSE endpoint URL. Requires a running server: docker run -p 11235:11235 unclecode/crawl4ai",
+      "default": "http://localhost:11235/mcp"
+    }
+  ]
+}

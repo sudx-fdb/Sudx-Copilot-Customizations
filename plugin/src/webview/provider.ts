@@ -6,6 +6,7 @@ import { DeploymentEngine } from '../deployment/engine';
 import { HookManager } from '../deployment/hooks';
 import { SudxSettings } from '../config/settings';
 import { StateManager } from '../config/state';
+import { McpTokenManager } from '../mcp/tokenManager';
 import { TemplateScanner } from '../deployment/scanner';
 import {
   IConfigDataPayload,
@@ -14,6 +15,8 @@ import {
   IUpdateHookPayload,
   IHookConfig,
   IFeatureFlags,
+  IMcpServerStatus,
+  IMcpServerConfig,
   DeploymentState,
 } from '../types';
 import {
@@ -34,10 +37,12 @@ export class SudxWebviewProvider {
   private settings: SudxSettings;
   private state: StateManager;
   private scanner: TemplateScanner;
+  private tokenManager: McpTokenManager | null;
   private context: vscode.ExtensionContext;
 
   private panel: vscode.WebviewPanel | null = null;
   private _panelNonce: string | null = null;
+  private initTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
     logger: SudxLogger,
@@ -47,7 +52,8 @@ export class SudxWebviewProvider {
     settings: SudxSettings,
     state: StateManager,
     scanner: TemplateScanner,
-    context: vscode.ExtensionContext
+    context: vscode.ExtensionContext,
+    tokenManager?: McpTokenManager
   ) {
     this.logger = logger;
     this.messageHandler = messageHandler;
@@ -56,6 +62,7 @@ export class SudxWebviewProvider {
     this.settings = settings;
     this.state = state;
     this.scanner = scanner;
+    this.tokenManager = tokenManager ?? null;
     this.context = context;
 
     this.registerMessageHandlers();
@@ -92,6 +99,10 @@ export class SudxWebviewProvider {
 
     this.panel.onDidDispose(() => {
       this.logger.debug(MODULE, 'Panel disposed');
+      if (this.initTimer) {
+        clearTimeout(this.initTimer);
+        this.initTimer = null;
+      }
       this.panel = null;
       this._panelNonce = null;
     });
@@ -105,13 +116,18 @@ export class SudxWebviewProvider {
     });
 
     // Push initial data
-    setTimeout(() => {
+    this.initTimer = setTimeout(() => {
+      this.initTimer = null;
       this.pushConfigData();
       this.pushStatusData();
     }, 200);
   }
 
   dispose(): void {
+    if (this.initTimer) {
+      clearTimeout(this.initTimer);
+      this.initTimer = null;
+    }
     this.panel?.dispose();
     this.panel = null;
     this.messageHandler.dispose();
@@ -154,6 +170,7 @@ export class SudxWebviewProvider {
     <main id="page-main" class="page page--active">
       ${this.buildStatusSection()}
       ${this.buildHooksSection()}
+      ${this.buildMcpSection()}
       ${this.buildAgentSection()}
       ${this.buildDeploySection()}
       ${this.buildFooter()}
@@ -175,6 +192,7 @@ export class SudxWebviewProvider {
       animationsJs: webview.asWebviewUri(vscode.Uri.joinPath(mediaPath, 'scripts', 'animations.js')),
       terminalLogoJs: webview.asWebviewUri(vscode.Uri.joinPath(mediaPath, 'scripts', 'terminalLogo.js')),
       deployJs: webview.asWebviewUri(vscode.Uri.joinPath(mediaPath, 'scripts', 'deploy.js')),
+      mcpJs: webview.asWebviewUri(vscode.Uri.joinPath(mediaPath, 'scripts', 'mcp.js')),
       mainJs: webview.asWebviewUri(vscode.Uri.joinPath(mediaPath, 'scripts', 'main.js')),
     };
   }
@@ -242,24 +260,20 @@ export class SudxWebviewProvider {
           </div>
           <span class="file-count" id="file-count">0 files</span>
         </div>
+        <div class="mcp-deploy-status" id="mcp-deploy-status" style="display:none"></div>
       </section>`;
   }
 
   private buildHooksSection(): string {
-    const hooks = [
-      { key: 'sessionContext', name: STRINGS.HOOK_SESSION_CONTEXT, desc: STRINGS.HOOK_SESSION_CONTEXT_DESC },
-      { key: 'protectPlans', name: STRINGS.HOOK_PROTECT_PLANS, desc: STRINGS.HOOK_PROTECT_PLANS_DESC },
-      { key: 'postEdit', name: STRINGS.HOOK_POST_EDIT, desc: STRINGS.HOOK_POST_EDIT_DESC },
-      { key: 'planReminder', name: STRINGS.HOOK_PLAN_REMINDER, desc: STRINGS.HOOK_PLAN_REMINDER_DESC },
-    ];
+    const hooks = this.hookManager.getAvailableHooks();
 
     const hookItems = hooks.map(h => `
-          <div class="hook-item" data-hook="${h.key}">
+          <div class="hook-item" data-hook="${h.name}">
             <div class="hook-item__info">
-              <span class="hook-item__name">${this.escapeHtml(h.name)}</span>
-              <span class="hook-item__desc" title="${this.escapeHtml(h.desc)}">${this.escapeHtml(h.desc)}</span>
+              <span class="hook-item__name">${this.escapeHtml(h.displayName)}</span>
+              <span class="hook-item__desc" title="${this.escapeHtml(h.description)}">${this.escapeHtml(h.description)}</span>
             </div>
-            <button class="toggle" role="switch" aria-checked="true" aria-label="${this.escapeHtml(h.name)}: Enabled" aria-roledescription="toggle switch" data-hook="${h.key}" tabindex="0">
+            <button class="toggle" role="switch" aria-checked="true" aria-label="${this.escapeHtml(h.displayName)}: Enabled" aria-roledescription="toggle switch" data-hook="${h.name}" tabindex="0">
               <span class="toggle__label--on">${this.escapeHtml(STRINGS.TOGGLE_ON)}</span>
               <span class="toggle__label--off">${this.escapeHtml(STRINGS.TOGGLE_OFF)}</span>
             </button>
@@ -269,6 +283,50 @@ export class SudxWebviewProvider {
         <h2 class="section-title" id="hooks-section-title">\u250C\u2500\u2500 ${this.escapeHtml(STRINGS.WV_SECTION_HOOKS)}</h2>
         <p class="section-description">${this.escapeHtml(STRINGS.WV_SECTION_HOOKS_DESC)}</p>
         <div class="card">${hookItems}
+        </div>
+      </section>`;
+  }
+
+  private buildMcpSection(): string {
+    this.logger.debug(MODULE, 'Building MCP Servers section');
+
+    const servers = [
+      { name: 'Playwright', key: 'playwright', transport: 'stdio' },
+      { name: 'Figma', key: 'figma', transport: 'stdio' },
+      { name: 'Crawl4ai', key: 'crawl4ai', transport: 'SSE' },
+    ];
+
+    const serverItems = servers.map(s => `
+          <div class="hook-item" data-mcp-server="${s.key}">
+            <div class="hook-item__info">
+              <span class="hook-item__name">${this.escapeHtml(s.name)}</span>
+              <span class="hook-item__desc">${this.escapeHtml(s.transport)}</span>
+            </div>
+            <div class="hook-item__controls">
+              <span class="status-dot status-dot--inactive mcp-status-dot" data-mcp-server="${s.key}" title="Not configured"></span>
+              <button class="toggle" role="switch" aria-checked="true" aria-label="${this.escapeHtml(s.name)}: Enabled" aria-roledescription="toggle switch" data-mcp-server-toggle="${s.key}" tabindex="0">
+                <span class="toggle__label--on">${this.escapeHtml(STRINGS.TOGGLE_ON)}</span>
+                <span class="toggle__label--off">${this.escapeHtml(STRINGS.TOGGLE_OFF)}</span>
+              </button>
+            </div>
+          </div>`).join('');
+
+    return `<section class="section skeleton-loading" aria-labelledby="mcp-section-title">
+        <h2 class="section-title" id="mcp-section-title">\u250C\u2500\u2500 ${this.escapeHtml(STRINGS.WV_SECTION_MCP)}</h2>
+        <p class="section-description">${this.escapeHtml(STRINGS.WV_SECTION_MCP_DESC)}</p>
+        <div class="card">${serverItems}
+        </div>
+        <div class="card mcp-token-card">
+          <div class="hook-item">
+            <div class="hook-item__info">
+              <span class="hook-item__name">${this.escapeHtml(STRINGS.MCP_TOKEN_LABEL_FIGMA)}</span>
+              <span class="hook-item__desc mcp-token-status" id="mcp-figma-token-status">${this.escapeHtml(STRINGS.MCP_TOKEN_STATUS_CHECKING)}</span>
+            </div>
+            <div class="hook-item__controls">
+              <button class="btn btn--sm" id="mcp-set-figma-token" title="${this.escapeHtml(STRINGS.MCP_TOKEN_PROMPT)}">${this.escapeHtml(STRINGS.MCP_TOKEN_BTN_SET)}</button>
+              <button class="btn btn--sm btn--danger" id="mcp-clear-figma-token" title="Remove stored Figma token">${this.escapeHtml(STRINGS.MCP_TOKEN_BTN_CLEAR)}</button>
+            </div>
+          </div>
         </div>
       </section>`;
   }
@@ -329,6 +387,7 @@ export class SudxWebviewProvider {
           <button class="log-filter-btn" data-filter="success">[\u2713]</button>
           <button class="log-filter-btn" data-filter="error">[\u2717]</button>
           <button class="log-filter-btn" data-filter="skip">[\u2014]</button>
+          <button class="log-filter-btn" data-filter="mcp">[\u25C6 MCP]</button>
         </div>
         <div class="log-body" id="log-body" role="log" aria-live="polite">
           <p class="log-empty" id="log-empty">${this.escapeHtml(STRINGS.WV_LOG_EMPTY)}</p>
@@ -346,7 +405,8 @@ export class SudxWebviewProvider {
   <script nonce="${nonce}" src="${uris.animationsJs}" defer data-load-order="2"></script>
   <script nonce="${nonce}" src="${uris.terminalLogoJs}" defer data-load-order="3"></script>
   <script nonce="${nonce}" src="${uris.deployJs}" defer data-load-order="4"></script>
-  <script nonce="${nonce}" src="${uris.mainJs}" defer data-load-order="5"></script>`;
+  <script nonce="${nonce}" src="${uris.mcpJs}" defer data-load-order="5"></script>
+  <script nonce="${nonce}" src="${uris.mainJs}" defer data-load-order="6"></script>`;
   }
 
   // ─── Private: Message Handlers ─────────────────────────────────────────
@@ -465,6 +525,99 @@ export class SudxWebviewProvider {
       });
     });
 
+    this.messageHandler.registerHandler('getMcpServers', async (_payload, requestId) => {
+      this.logger.debug(MODULE, 'Fetching MCP server status for webview');
+      try {
+        const servers = await this.readMcpServerStatus();
+        await this.messageHandler.sendToWebview({
+          type: 'mcpServersData',
+          payload: servers,
+          requestId,
+          success: true,
+        });
+        this.logger.debug(MODULE, 'MCP server status pushed', { count: servers.length });
+      } catch (err) {
+        this.logger.error(MODULE, 'Failed to read MCP server status', err);
+        await this.messageHandler.sendToWebview({
+          type: 'mcpServersData',
+          payload: [],
+          requestId,
+          success: false,
+          error: 'Failed to read MCP configuration',
+        });
+      }
+    });
+
+    this.messageHandler.registerHandler('updateMcpServer', async (payload, requestId) => {
+      this.logger.debug(MODULE, 'Updating individual MCP server toggle', payload);
+      const data = payload as { serverName: string; enabled: boolean };
+      const current = this.settings.getMcpServerConfig();
+      current[data.serverName] = data.enabled;
+      await this.settings.setMcpServerConfig(current);
+      await this.messageHandler.sendToWebview({
+        type: 'configData',
+        payload: { mcpServers: current },
+        requestId,
+        success: true,
+      });
+    });
+
+    this.messageHandler.registerHandler('updateAllMcpServers', async (payload, requestId) => {
+      this.logger.debug(MODULE, 'Updating all MCP server toggles', payload);
+      const config = payload as IMcpServerConfig;
+      await this.settings.setMcpServerConfig(config);
+      await this.messageHandler.sendToWebview({
+        type: 'configData',
+        payload: { mcpServers: config },
+        requestId,
+        success: true,
+      });
+    });
+
+    this.messageHandler.registerHandler('setMcpToken', async (payload, requestId) => {
+      this.logger.debug(MODULE, 'setMcpToken request received');
+      const data = payload as { serverName: string; token: string };
+      if (!this.tokenManager) {
+        await this.messageHandler.sendToWebview({ type: 'mcpTokenStatus', payload: { serverName: data.serverName, hasToken: false, error: 'Token manager not available' }, requestId, success: false });
+        return;
+      }
+      const result = await this.tokenManager.storeToken(data.serverName, data.token);
+      await this.messageHandler.sendToWebview({
+        type: 'mcpTokenStatus',
+        payload: { serverName: data.serverName, hasToken: result.success, error: result.error },
+        requestId,
+        success: result.success,
+      });
+    });
+
+    this.messageHandler.registerHandler('clearMcpToken', async (payload, requestId) => {
+      this.logger.debug(MODULE, 'clearMcpToken request received');
+      const data = payload as { serverName: string };
+      if (!this.tokenManager) {
+        await this.messageHandler.sendToWebview({ type: 'mcpTokenStatus', payload: { serverName: data.serverName, hasToken: false }, requestId, success: true });
+        return;
+      }
+      const result = await this.tokenManager.deleteToken(data.serverName);
+      await this.messageHandler.sendToWebview({
+        type: 'mcpTokenStatus',
+        payload: { serverName: data.serverName, hasToken: false, error: result.error },
+        requestId,
+        success: result.success,
+      });
+    });
+
+    this.messageHandler.registerHandler('getMcpTokenStatus', async (payload, requestId) => {
+      this.logger.debug(MODULE, 'getMcpTokenStatus request received');
+      const data = payload as { serverName: string };
+      const hasToken = this.tokenManager ? await this.tokenManager.hasToken(data.serverName) : false;
+      await this.messageHandler.sendToWebview({
+        type: 'mcpTokenStatus',
+        payload: { serverName: data.serverName, hasToken },
+        requestId,
+        success: true,
+      });
+    });
+
     // Push UI settings to webview when settings change
     this.settings.onSettingsChanged(({ key }) => {
       if (key.startsWith('ui.') && this.panel) {
@@ -541,6 +694,7 @@ export class SudxWebviewProvider {
         fileCount: allFiles.length,
         uiSettings,
         featureFlags: this.getFeatureFlags(),
+        mcpServers: this.settings.getMcpServerConfig(),
       };
 
       await this.messageHandler.sendToWebview({
@@ -565,6 +719,10 @@ export class SudxWebviewProvider {
         lastDeployDate: status.lastDeployDate?.toISOString() ?? null,
         filesCount: status.filesCount,
         deploymentState: this.engine.getState(),
+        mcpDeployed: status.mcpDeployed,
+        lastMcpDeployDate: status.lastMcpDeployDate,
+        mcpServerCount: status.mcpServerCount,
+        mcpServers: status.mcpServers,
       };
 
       await this.messageHandler.sendToWebview({
@@ -580,6 +738,45 @@ export class SudxWebviewProvider {
   }
 
   // ─── Private: Utilities ────────────────────────────────────────────────
+
+  private async readMcpServerStatus(): Promise<IMcpServerStatus[]> {
+    this.logger.debug(MODULE, 'Reading MCP server status from .vscode/mcp.json');
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders || workspaceFolders.length === 0) {
+      this.logger.debug(MODULE, 'No workspace folder — returning empty MCP status');
+      return [];
+    }
+
+    const mcpConfigUri = vscode.Uri.joinPath(workspaceFolders[0].uri, '.vscode', 'mcp.json');
+
+    try {
+      const fileData = await vscode.workspace.fs.readFile(mcpConfigUri);
+      const content = Buffer.from(fileData).toString('utf-8');
+      const parsed = JSON.parse(content);
+      const servers: IMcpServerStatus[] = [];
+
+      if (parsed && typeof parsed === 'object' && parsed.mcpServers) {
+        for (const [name, entry] of Object.entries(parsed.mcpServers)) {
+          if (!entry || typeof entry !== 'object') { continue; }
+          const serverEntry = entry as Record<string, unknown>;
+          const isSSE = typeof serverEntry.url === 'string';
+          servers.push({
+            name,
+            transport: isSSE ? 'sse' : 'stdio',
+            configured: true,
+            command: typeof serverEntry.command === 'string' ? serverEntry.command : undefined,
+            url: typeof serverEntry.url === 'string' ? serverEntry.url : undefined,
+          });
+        }
+      }
+
+      this.logger.debug(MODULE, 'MCP server status read', { count: servers.length });
+      return servers;
+    } catch {
+      this.logger.debug(MODULE, 'No .vscode/mcp.json found or unreadable — returning empty');
+      return [];
+    }
+  }
 
   private getOrCreateNonce(): string {
     if (!this._panelNonce) {

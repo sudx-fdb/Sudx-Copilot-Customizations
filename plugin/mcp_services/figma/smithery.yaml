@@ -1,0 +1,25 @@
+# Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
+
+startCommand:
+  type: stdio
+  configSchema:
+    # JSON Schema defining the configuration options for the MCP.
+    type: object
+    required:
+      - figmaApiKey
+    properties:
+      figmaApiKey:
+        type: string
+        description: Figma API token for authenticating requests
+    description: Configuration for the Figma MCP server. Provide your Figma API
+      token under 'figmaApiKey'.
+  commandFunction:
+    # A JS function that produces the CLI command based on the given config to start the MCP on stdio.
+    |-
+    (config) => ({
+      command: 'node',
+      args: ['dist/index.js'],
+      env: { FIGMA_API_KEY: config.figmaApiKey }
+    })
+  exampleConfig:
+    figmaApiKey: your_figma_api_key_here

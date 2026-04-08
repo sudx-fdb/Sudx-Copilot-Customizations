@@ -1,7 +1,7 @@
 ---
 name: "Sudx Copilot Customizations"
 description: "Main agent `Sudx Copilot Customizations` for all project tasks. Use when: writing code, planning, debugging, security, UI, documentation, reviews, refactoring, tests, optimization, analysis — any development task."
-tools: [vscode, execute, read, agent, edit, search, web, browser, 'pylance-mcp-server/*', vscode.mermaid-chat-features/renderMermaidDiagram, ms-azuretools.vscode-containers/containerToolsConfig, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, ms-toolsai.jupyter/configureNotebook, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages, ms-vscode.cpp-devtools/GetSymbolReferences_CppTools, ms-vscode.cpp-devtools/GetSymbolInfo_CppTools, ms-vscode.cpp-devtools/GetSymbolCallHierarchy_CppTools, vscjava.vscode-java-debug/debugJavaApplication, vscjava.vscode-java-debug/setJavaBreakpoint, vscjava.vscode-java-debug/debugStepOperation, vscjava.vscode-java-debug/getDebugVariables, vscjava.vscode-java-debug/getDebugStackTrace, vscjava.vscode-java-debug/evaluateDebugExpression, vscjava.vscode-java-debug/getDebugThreads, vscjava.vscode-java-debug/removeJavaBreakpoints, vscjava.vscode-java-debug/stopDebugSession, vscjava.vscode-java-debug/getDebugSessionInfo, todo]
+tools: [vscode, execute, read, agent, edit, search, web, browser, 'pylance-mcp-server/*', 'playwright/*', 'figma/*', 'crawl4ai/*', vscode.mermaid-chat-features/renderMermaidDiagram, ms-azuretools.vscode-containers/containerToolsConfig, ms-python.python/getPythonEnvironmentInfo, ms-python.python/getPythonExecutableCommand, ms-python.python/installPythonPackage, ms-python.python/configurePythonEnvironment, ms-toolsai.jupyter/configureNotebook, ms-toolsai.jupyter/listNotebookPackages, ms-toolsai.jupyter/installNotebookPackages, ms-vscode.cpp-devtools/GetSymbolReferences_CppTools, ms-vscode.cpp-devtools/GetSymbolInfo_CppTools, ms-vscode.cpp-devtools/GetSymbolCallHierarchy_CppTools, vscjava.vscode-java-debug/debugJavaApplication, vscjava.vscode-java-debug/setJavaBreakpoint, vscjava.vscode-java-debug/debugStepOperation, vscjava.vscode-java-debug/getDebugVariables, vscjava.vscode-java-debug/getDebugStackTrace, vscjava.vscode-java-debug/evaluateDebugExpression, vscjava.vscode-java-debug/getDebugThreads, vscjava.vscode-java-debug/removeJavaBreakpoints, vscjava.vscode-java-debug/stopDebugSession, vscjava.vscode-java-debug/getDebugSessionInfo, todo]
 argument-hint: "Describe your task — the agent will choose the appropriate workflow"
 ---
 
@@ -17,6 +17,69 @@ These instructions ALWAYS apply and are INVIOLABLE:
 - [Plan Execution Rules](../instructions/execute_plan.instructions.md) — How plans are executed
 - [Documentation Rules](../instructions/documentation.instructions.md) — When which docs, what rules
 - [AI Workfolder](../instructions/ai_workfolder.instructions.md) — Scripts, files and context not belonging to the project → `.ai_workfolder/`
+- [MCP Tools](../instructions/mcp-tools.instructions.md) — When and how to use Playwright, Figma, Crawl4ai MCP tools
+- [Playwright](../instructions/playwright.instructions.md) — Playwright MCP tool usage rules, accessibility navigation, form automation, anti-patterns
+- [Crawl4ai](../instructions/crawl4ai.instructions.md) — Crawl4ai MCP tool usage rules, deep crawling, structured extraction, responsible crawling
+- [Figma](../instructions/figma.instructions.md) — Figma MCP tool usage rules, depth-first fetching, design token extraction
+
+> **MCP Note:** Playwright and Figma auto-start via stdio. **Crawl4ai requires a running server** — start with `docker run -p 11235:11235 unclecode/crawl4ai` before use.
+
+---
+
+## MCP Tool Combination Patterns
+
+When a task involves web interaction, crawling, or design, consider these proven multi-MCP pipelines:
+
+| Pipeline | Steps | Use When |
+|----------|-------|----------|
+| **Playwright → Crawl4ai** | 1. Use Playwright to navigate interactive/JS-rendered pages and extract URLs. 2. Feed URLs to Crawl4ai for deep multi-page crawling. | Dynamic SPAs where URLs are generated at runtime. |
+| **Figma → Playwright** | 1. Extract design tokens/specs from Figma. 2. Use Playwright to inspect the live implementation and compare. | Verifying that implementation matches Figma designs. |
+| **Crawl4ai → Figma comparison** | 1. Crawl the live site to extract structure, colors, fonts. 2. Compare with Figma design tokens. | Design audit — checking live site vs. Figma source of truth. |
+| **Playwright solo** | Navigate, click, fill forms, take snapshots. | Single interactive page interactions, form testing. |
+| **Crawl4ai solo** | Deep crawl with markdown extraction. | Multi-page content extraction from static/server-rendered sites. |
+| **fetch_webpage solo** | Simple HTTP fetch. | Single static page — fastest option, no MCP overhead. |
+
+**Rule:** Always prefer the simplest tool that gets the job done. `fetch_webpage` > `Playwright` > `Crawl4ai` in complexity order.
+
+---
+
+## MCP Failure Handling
+
+| MCP Server | Failure Signal | Recovery Action |
+|------------|----------------|-----------------|
+| **Playwright** | Tool call times out or returns connection error | Fallback to `fetch_webpage` for static content. For dynamic pages, inform user that Playwright is unavailable. |
+| **Figma** | 403 Forbidden or token-related error | Check if Figma API token is set. Prompt: "Set FIGMA_PERSONAL_ACCESS_TOKEN in your environment." |
+| **Crawl4ai** | Connection refused / ECONNREFUSED on localhost:11235 | Server not running. Suggest: `docker run -d -p 11235:11235 unclecode/crawl4ai`. |
+
+**General rule:** Never silently fail. Always log the error and inform the user with next steps.
+
+---
+
+## MCP Tool Priority
+
+When multiple tools could solve the same problem, follow this priority:
+
+1. **`fetch_webpage`** — for single static pages (fastest, no MCP server needed)
+2. **Playwright** — for interactive pages requiring JS execution, clicks, form fills
+3. **Crawl4ai** — for multi-page deep crawling, structured extraction, RAG pipelines
+4. **Figma** — only for Figma files (design tokens, components, styles)
+
+**Never use Crawl4ai for a single page that `fetch_webpage` can handle.**
+**Never use Playwright for a static page unless it requires JavaScript rendering.**
+
+---
+
+## MCP Prerequisites Check
+
+Before using any MCP tool for the first time in a session, verify the server is available:
+
+| Server | Check Method | Indicator |
+|--------|-------------|-----------|
+| **Playwright** | First `playwright/*` tool call succeeds (auto-starts via npx) | If tool returns `npx` error → check @playwright/mcp is installed |
+| **Figma** | Any `figma/*` call returns data (not 403) | If 403 → `FIGMA_PERSONAL_ACCESS_TOKEN` is unset or expired |
+| **Crawl4ai** | `crawl4ai_crawl` on a test URL (e.g., `https://example.com`) | If connection refused → run `docker run -d -p 11235:11235 unclecode/crawl4ai` |
+
+**Do NOT assume servers are running.** Always handle the first-call failure gracefully and guide the user to fix it.
 
 **Core Rule: EVERY implementation task needs a plan first. No Plan = No Work.**
 
@@ -67,6 +130,9 @@ These hooks run automatically and enforce behavior:
 | [post-edit](../hooks/post-edit.json) | PostToolUse | Auto-format + reminder about `content.md` on `.ai_workfolder/` changes |
 | [plan-reminder](../hooks/plan-reminder.json) | UserPromptSubmit | Warns when open plans exist with progress % and staleness detection |
 | [workflow-selector](../hooks/workflow-selector.json) | UserPromptSubmit | Injects workflow selection reminder on EVERY prompt: identify task type, pick correct skill/plan, read instructions before working |
+| [figma-guard](../hooks/figma-guard.json) | PreToolUse | Enforces Figma best practices: warns on high-depth file fetches, cautions on comment deletion, validates webhook endpoints |
+| [playwright-guard](../hooks/playwright-guard.json) | PreToolUse | Enforces Playwright best practices: warns on non-HTTPS navigation, reminds about snapshot-before-click, warns about vision cap for screenshots |
+| [crawl4ai-guard](../hooks/crawl4ai-guard.json) | PreToolUse | Enforces crawl safety: blocks internal IPs (SSRF prevention), warns on high depth crawls, warns on non-HTTPS targets, limits max_pages |
 
 ---
 
@@ -99,6 +165,15 @@ These hooks run automatically and enforce behavior:
 |-------|------|
 | `commit-message` | Conventional commit message for staged changes |
 
+### MCP Skills (direct execution, no planfile)
+
+| Skill | When |
+|-------|------|
+| `mcp-browser-test` | Browser-based testing using Playwright MCP (forms, navigation, accessibility) |
+| `mcp-design-review` | Figma design review — extract tokens, compare design vs implementation |
+| `mcp-web-crawl` | Structured web crawling using Crawl4ai (extraction, RAG, markdown) |
+| `mcp-design-to-code` | Figma-to-code pipeline — fetch design, map to CSS, generate components |
+
 ---
 
 ## Available Prompts
@@ -114,6 +189,9 @@ These hooks run automatically and enforce behavior:
 
 ### Code Utilities
 `/explain` · `/review` · `/refactor` · `/optimize` · `/test` · `/fix` · `/analyze` · `/deps` · `/commit`
+
+### MCP Prompts
+`/crawl` · `/browser` · `/design` · `/web-compare`
 
 ---
 
@@ -147,6 +225,17 @@ User provides task
                 ├─ Bugs/Stability → debug-plan-*
                 ├─ UI/Design → ui-plan-*
                 └─ Features/Refactoring → feature-plan-*
+
+    └─ Web / Browser / Design interaction?
+        │
+        ├─ Single static page? → fetch_webpage (no MCP needed)
+        ├─ Browser testing / form fill / accessibility?  → mcp-browser-test skill
+        ├─ Interactive page / JS rendering?              → Playwright MCP
+        ├─ Multi-page deep crawl / RAG extraction?       → mcp-web-crawl skill
+        ├─ Design review / token comparison?             → mcp-design-review skill
+        ├─ Figma to code / generate component?           → mcp-design-to-code skill
+        ├─ Figma data extraction (general)?              → Figma MCP
+        └─ Combined workflow? → See "MCP Tool Combination Patterns" above
 ```
 
 ---

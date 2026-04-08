@@ -53,6 +53,11 @@ try {
         $messages += "REMINDER: Update .ai_workfolder/content.md"
     }
 
+    # Check: .vscode/mcp.json manual edit warning
+    if ($normalPath -match "\.vscode/mcp\.json$") {
+        $messages += "WARNING: MCP config (.vscode/mcp.json) was manually edited. Run Sudx CC deploy to restore managed servers if needed."
+    }
+
     # Auto-format if formatter available
     $ext = [System.IO.Path]::GetExtension($filePath).ToLower()
     $root = Split-Path (Split-Path (Split-Path $PSScriptRoot))

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import {
   IDeploymentConfig,
   IDeploymentResult,
@@ -7,6 +8,8 @@ import {
   DeploymentStateChangedHandler,
   ProgressCallback,
   IDeploymentHistory,
+  IMcpDeploymentState,
+  TemplateCategory,
 } from '../types';
 import { SudxLogger } from '../utils/logger';
 import { PathUtils } from '../utils/paths';
@@ -14,8 +17,10 @@ import { TemplateScanner } from './scanner';
 import { FileCopier } from './copier';
 import { HookManager } from './hooks';
 import { AgentActivator } from './agent';
+import { McpDeployer } from './mcpDeployer';
 import { StateManager } from '../config/state';
 import { STRINGS } from '../constants';
+import { SudxSettings } from '../config/settings';
 
 const MODULE = 'DeployEngine';
 
@@ -29,7 +34,9 @@ export class DeploymentEngine {
   private copier: FileCopier;
   private hookManager: HookManager;
   private agentActivator: AgentActivator;
+  private mcpDeployer: McpDeployer;
   private stateManager: StateManager;
+  private settings: SudxSettings;
 
   private currentState: DeploymentState = DeploymentState.Idle;
   private cancellationSource: vscode.CancellationTokenSource | null = null;
@@ -47,7 +54,9 @@ export class DeploymentEngine {
     copier: FileCopier,
     hookManager: HookManager,
     agentActivator: AgentActivator,
-    stateManager: StateManager
+    mcpDeployer: McpDeployer,
+    stateManager: StateManager,
+    settings: SudxSettings
   ) {
     this.logger = logger;
     this.paths = paths;
@@ -55,7 +64,9 @@ export class DeploymentEngine {
     this.copier = copier;
     this.hookManager = hookManager;
     this.agentActivator = agentActivator;
+    this.mcpDeployer = mcpDeployer;
     this.stateManager = stateManager;
+    this.settings = settings;
   }
 
   onStateChange(handler: DeploymentStateChangedHandler): void {
@@ -155,9 +166,14 @@ export class DeploymentEngine {
         .filter((f) => !filesToDeploy.includes(f))
         .map((f) => f.relativePath);
 
+      // Separate MCP files (deploy to .vscode/) from regular files (deploy to .github/)
+      const mcpFiles = filesToDeploy.filter((f) => f.category === TemplateCategory.Mcp);
+      const regularFiles = filesToDeploy.filter((f) => f.category !== TemplateCategory.Mcp);
+
       this.logger.info(MODULE, 'Files filtered', {
         total: allFiles.length,
         deploy: filesToDeploy.length,
+        mcp: mcpFiles.length,
         skip: skippedFiles.length,
       });
 
@@ -173,14 +189,111 @@ export class DeploymentEngine {
 
       // ── Step 4: Deploy files ───────────────────────────────────────────
       this.setState(DeploymentState.Deploying);
+
+      // Deploy regular files to .github/ (or custom deploy path)
       const copyResult = await this.copier.copyFiles(
-        filesToDeploy,
+        regularFiles,
         targetRoot,
         (current, total, fileName) => {
-          this.emitProgress(current, total, fileName);
+          this.emitProgress(current, total + mcpFiles.length, fileName);
         },
         this.cancellationSource.token
       );
+
+      // Deploy MCP files via McpDeployer (merge/overwrite/skip based on setting)
+      if (mcpFiles.length > 0 && copyResult.success) {
+        const mcpMode = this.settings.getMcpDeployMode();
+        const mcpServerConfig = this.settings.getMcpServerConfig();
+        this.logger.info(MODULE, `MCP deployment mode: ${mcpMode}`, { mcpFileCount: mcpFiles.length, serverConfig: mcpServerConfig });
+
+        // Check for MCP template version mismatch
+        const storedVersion = this.stateManager.getMcpTemplateVersion();
+        if (storedVersion !== '0.0.0') {
+          this.emitMcpProgress(`Previous MCP version: ${storedVersion}`, 'mcp-validate');
+        }
+
+        this.emitMcpProgress('Validating MCP config', 'mcp-validate');
+        this.emitMcpProgress('Merging MCP servers', 'mcp-merge');
+
+        const mcpResult = await this.mcpDeployer.deploy(mcpFiles, mcpMode, mcpServerConfig);
+        // Emit validation warnings as [MCP-WARN] entries
+        if (mcpResult.validationWarnings && mcpResult.validationWarnings.length > 0) {
+          for (const warning of mcpResult.validationWarnings) {
+            this.emitMcpProgress(warning, 'mcp-validate');
+          }
+        }
+        if (mcpResult.success) {
+          this.emitMcpProgress(`MCP deployed: ${mcpResult.serversDeployed.join(', ')}`, 'mcp-merge');
+          if (mcpResult.serversPreserved && mcpResult.serversPreserved.length > 0) {
+            this.emitMcpProgress(`Preserved user servers: ${mcpResult.serversPreserved.join(', ')}`, 'mcp-merge');
+          }
+          for (const server of mcpResult.serversDeployed) {
+            copyResult.copied.push(`.vscode/mcp.json [${server}]`);
+          }
+          // Persist MCP deployment state for tracking and rollback
+          const mcpState: IMcpDeploymentState = {
+            lastMcpDeployDate: new Date().toISOString(),
+            deployedServers: mcpResult.serversDeployed,
+            mcpConfigBackupPath: mcpResult.backupPath,
+            mergeConflicts: [],
+          };
+          await this.stateManager.setMcpDeploymentState(mcpState);
+          // Store deployed template version for future mismatch detection
+          if (mcpResult.templateVersion) {
+            const previousVersion = this.stateManager.getMcpTemplateVersion();
+            await this.stateManager.setMcpTemplateVersion(mcpResult.templateVersion);
+            // Notify user if MCP template was updated
+            if (previousVersion !== '0.0.0' && previousVersion !== mcpResult.templateVersion) {
+              this.emitMcpProgress(`MCP template updated: ${previousVersion} → ${mcpResult.templateVersion}`, 'mcp-merge');
+              vscode.window.showInformationMessage(
+                `MCP config updated from v${previousVersion} to v${mcpResult.templateVersion}`,
+                'View Log'
+              );
+            }
+          }
+          this.logger.info(MODULE, 'MCP deployment state persisted', mcpState);
+          this.logger.info(MODULE, 'MCP deployment complete', {
+            deployed: mcpResult.serversDeployed,
+            preserved: mcpResult.serversPreserved,
+            duration: `${mcpResult.duration}ms`,
+          });
+        } else {
+          copyResult.failed.push({ file: '.vscode/mcp.json', error: mcpResult.error ?? 'MCP deployment failed', recoverable: true });
+          this.logger.error(MODULE, 'MCP deployment failed', { error: mcpResult.error });
+        }
+
+        // Emit cached MCP health check results into deploy log
+        try {
+          const healthCache = this.stateManager.getMcpHealthCache();
+          if (healthCache && healthCache.length > 0) {
+            const healthParts = healthCache.map(s => `${s.serverName}: ${s.healthy ? 'ready' : 'unreachable'}`);
+            this.emitMcpProgress(`[MCP-HEALTH] ${healthParts.join(', ')}`, 'mcp-health');
+          }
+        } catch (healthErr) {
+          this.logger.debug(MODULE, 'Could not emit MCP health status', healthErr);
+        }
+
+        // Generate MCP context file for session-context hook
+        if (mcpResult.success && workspaceRoot) {
+          try {
+            const healthCache = this.stateManager.getMcpHealthCache();
+            const healthMap: Record<string, boolean> = {};
+            if (healthCache) {
+              for (const s of healthCache) { healthMap[s.serverName] = s.healthy; }
+            }
+            await this.mcpDeployer.generateMcpContextFile(
+              JSON.parse(await this.fileOps.readFile(
+                path.join(workspaceRoot, '.vscode', 'mcp.json')
+              )),
+              healthMap,
+              workspaceRoot
+            );
+            this.logger.debug(MODULE, 'MCP context file generated after deployment');
+          } catch (ctxErr) {
+            this.logger.warn(MODULE, 'Failed to generate MCP context file', { error: String(ctxErr) });
+          }
+        }
+      }
 
       if (this.isCancelled()) {
         return this.makeCancelledResult();
@@ -251,13 +364,28 @@ export class DeploymentEngine {
     deployed: boolean;
     lastDeployDate: Date | null;
     filesCount: number;
+    mcpDeployed: boolean;
+    lastMcpDeployDate: string | null;
+    mcpServerCount: number;
+    mcpServers: string[];
   }> {
     const lastDate = this.stateManager.getLastDeployDate();
     const files = this.stateManager.getDeployedFilesList();
+    const mcpState = this.stateManager.getMcpDeploymentState();
+    this.logger.debug(MODULE, 'getDeploymentStatus called', {
+      deployed: lastDate !== null,
+      filesCount: files.length,
+      mcpDeployed: mcpState.deployedServers.length > 0,
+      mcpServerCount: mcpState.deployedServers.length,
+    });
     return {
       deployed: lastDate !== null,
       lastDeployDate: lastDate,
       filesCount: files.length,
+      mcpDeployed: mcpState.deployedServers.length > 0,
+      lastMcpDeployDate: mcpState.lastMcpDeployDate,
+      mcpServerCount: mcpState.deployedServers.length,
+      mcpServers: mcpState.deployedServers,
     };
   }
 
@@ -291,6 +419,17 @@ export class DeploymentEngine {
     }
   }
 
+  private emitMcpProgress(message: string, logType: string): void {
+    this.logger.debug(MODULE, `MCP progress: [${logType}] ${message}`);
+    for (const handler of this.progressHandlers) {
+      try {
+        handler(0, 0, `[MCP] ${message}`);
+      } catch (err) {
+        this.logger.error(MODULE, 'MCP progress handler error', err);
+      }
+    }
+  }
+
   private isCancelled(): boolean {
     return this.cancellationSource?.token.isCancellationRequested ?? false;
   }
@@ -301,12 +440,14 @@ export class DeploymentEngine {
     await this.stateManager.setDeployedFilesList(result.deployedFiles);
     await this.stateManager.incrementDeploymentCount();
 
+    const mcpState = this.stateManager.getMcpDeploymentState();
     const historyEntry: IDeploymentHistory = {
       date: now.toISOString(),
       filesDeployed: result.deployedFiles.length,
       hooksEnabled: this.hookManager
         .getEnabledHooks()
         .map((h) => h.name),
+      mcpServersDeployed: mcpState.deployedServers,
       duration: result.duration,
       success: result.success,
     };

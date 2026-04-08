@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "windows": "powershell -ExecutionPolicy Bypass -NoProfile -File .github/hooks/scripts/figma-guard.ps1",
+        "linux": "bash .github/hooks/scripts/figma-guard.sh",
+        "osx": "bash .github/hooks/scripts/figma-guard.sh",
+        "timeout": 10
+      }
+    ]
+  }
+}

@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { ITemplateFile, TemplateCategory } from '../types';
+import { ITemplateFile, TemplateCategory, IMcpServerConfig } from '../types';
 import { SudxLogger } from '../utils/logger';
 import { FileOperations } from '../utils/fileOps';
 import { PathUtils } from '../utils/paths';
-import { FILE_PATTERNS_EXCLUDE, TEMPLATE_DIRS, MAX_FILE_SIZE } from '../constants';
+import { FILE_PATTERNS_EXCLUDE, TEMPLATE_DIRS, MAX_FILE_SIZE, VALID_MCP_SERVERS } from '../constants';
 
 const MODULE = 'Scanner';
 
@@ -92,12 +92,26 @@ export class TemplateScanner {
     }
 
     this.cache = files;
+
+    // Build MCP breakdown by server name
+    const mcpFiles = files.filter((f) => f.category === TemplateCategory.Mcp);
+    const mcpBreakdown: Record<string, number> = { total: mcpFiles.length };
+    for (const serverName of VALID_MCP_SERVERS) {
+      mcpBreakdown[serverName] = mcpFiles.filter((f) =>
+        path.basename(f.absolutePath).toLowerCase().startsWith(serverName.toLowerCase())
+      ).length;
+    }
+    mcpBreakdown['other'] = mcpFiles.length - Object.keys(mcpBreakdown)
+      .filter((k) => k !== 'total' && k !== 'other')
+      .reduce((sum, k) => sum + mcpBreakdown[k], 0);
+
     this.logger.info(MODULE, `Scan complete: ${files.length} files found`, {
       agents: files.filter((f) => f.category === TemplateCategory.Agents).length,
       instructions: files.filter((f) => f.category === TemplateCategory.Instructions).length,
       prompts: files.filter((f) => f.category === TemplateCategory.Prompts).length,
       skills: files.filter((f) => f.category === TemplateCategory.Skills).length,
       hooks: files.filter((f) => f.category === TemplateCategory.Hooks).length,
+      mcp: mcpBreakdown,
     });
 
     return files;
@@ -115,9 +129,59 @@ export class TemplateScanner {
     return this.scanCategory(context, TemplateCategory.Hooks);
   }
 
+  /**
+   * Returns MCP template files, optionally filtered by per-server enable/disable config.
+   * MCP files are matched against server names by checking if the filename starts with a known server name
+   * (e.g., `playwright.json`, `figma-config.json`, `crawl4ai-setup.json`).
+   * Files that don't match any known server name are always included.
+   */
+  async scanMcpFiles(
+    context: vscode.ExtensionContext,
+    serverConfig?: IMcpServerConfig
+  ): Promise<ITemplateFile[]> {
+    this.logger.debug(MODULE, 'Scanning MCP files', { serverConfig });
+    const mcpFiles = await this.scanCategory(context, TemplateCategory.Mcp);
+
+    if (!serverConfig) {
+      this.logger.debug(MODULE, 'No server config — returning all MCP files', { count: mcpFiles.length });
+      return mcpFiles;
+    }
+
+    const filtered = mcpFiles.filter((f) => {
+      const fileName = path.basename(f.absolutePath).toLowerCase();
+      for (const serverName of VALID_MCP_SERVERS) {
+        if (fileName.startsWith(serverName.toLowerCase())) {
+          const enabled = serverConfig[serverName] !== false;
+          if (!enabled) {
+            this.logger.debug(MODULE, `MCP file filtered out (server disabled)`, { file: f.relativePath, server: serverName });
+          }
+          return enabled;
+        }
+      }
+      // File doesn't match any known server — always include
+      return true;
+    });
+
+    this.logger.debug(MODULE, 'MCP files filtered', {
+      total: mcpFiles.length,
+      included: filtered.length,
+      excluded: mcpFiles.length - filtered.length,
+    });
+    return filtered;
+  }
+
   async getNonHookFiles(context: vscode.ExtensionContext): Promise<ITemplateFile[]> {
     const all = await this.scan(context);
     return all.filter((f) => f.category !== TemplateCategory.Hooks);
+  }
+
+  /**
+   * Determines whether an MCP template file is a config file (server definitions)
+   * vs other MCP-related content (extensions, middleware, docs).
+   * Config files are JSON files in the mcp/ directory.
+   */
+  isMcpConfigFile(file: ITemplateFile): boolean {
+    return file.category === TemplateCategory.Mcp && file.relativePath.endsWith('.json');
   }
 
   invalidateCache(): void {
@@ -132,6 +196,7 @@ export class TemplateScanner {
       prompts: TemplateCategory.Prompts,
       skills: TemplateCategory.Skills,
       hooks: TemplateCategory.Hooks,
+      mcp: TemplateCategory.Mcp,
     };
     return map[dirName] ?? null;
   }

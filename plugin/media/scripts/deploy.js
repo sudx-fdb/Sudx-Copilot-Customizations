@@ -68,7 +68,7 @@
   var resetCountdownTimer = null;
   var _scrollRafPending = false;
   /** @type {Object<string, number>} */
-  var filterCounts = { all: 0, success: 0, error: 0, skip: 0, info: 0 };
+  var filterCounts = { all: 0, success: 0, error: 0, skip: 0, info: 0, mcp: 0 };
 
   function init() {
     log('init', 'start');
@@ -145,7 +145,12 @@
         filterStyle.textContent = '.log-body[data-filter="success"] .log-line:not([data-type="success"]){display:none}' +
           '.log-body[data-filter="error"] .log-line:not([data-type="error"]){display:none}' +
           '.log-body[data-filter="skip"] .log-line:not([data-type="skip"]){display:none}' +
-          '.log-body[data-filter="info"] .log-line:not([data-type="info"]){display:none}';
+          '.log-body[data-filter="info"] .log-line:not([data-type="info"]){display:none}' +
+          '.log-body[data-filter="mcp"] .log-line:not([data-type="mcp"]){display:none}' +
+          '.log-line--mcp .log-line__text{color:var(--vscode-charts-blue, #4fc1ff)}' +
+          '.log-line__icon--mcp{color:var(--vscode-charts-blue, #4fc1ff)}' +
+          '.log-line--mcp-warn .log-line__text{color:var(--vscode-charts-yellow, #e5c07b)}' +
+          '.log-line__icon--mcp-warn{color:var(--vscode-charts-yellow, #e5c07b)}';
         document.head.appendChild(filterStyle);
       }
 
@@ -232,7 +237,17 @@
       progressText.textContent = '[' + data.current + '/' + data.total + '] ' + pct + '% \u2014 ' + smartTruncatePath(data.currentFile, PROGRESS_PATH_MAX);
     }
 
-    addLogEntry('info', '[' + data.current + '/' + data.total + '] ' + data.currentFile);
+    // Route MCP-prefixed progress to dedicated 'mcp' log type
+    // [MCP-WARN] entries get 'mcp-warn' subtype for yellow color
+    if (typeof data.currentFile === 'string' && data.currentFile.indexOf('[MCP]') === 0) {
+      if (data.currentFile.indexOf('[MCP-WARN]') >= 0) {
+        addLogEntry('mcp-warn', data.currentFile);
+      } else {
+        addLogEntry('mcp', data.currentFile);
+      }
+    } else {
+      addLogEntry('info', '[' + data.current + '/' + data.total + '] ' + data.currentFile);
+    }
   }
 
   /** @param {unknown} payload */
@@ -401,16 +416,18 @@
   // ─── Log Entries ───────────────────────────────────────────────────────
 
   /**
-   * @param {'success'|'error'|'skip'|'info'} type
+   * @param {'success'|'error'|'skip'|'info'|'mcp'|'mcp-warn'} type
    * @param {string} text
    */
   function addLogEntry(type, text) {
     log('addLogEntry', type + ': ' + text);
     logLineCount++;
-    filterCounts[type] = (filterCounts[type] || 0) + 1;
+    // Track mcp-warn under both 'mcp' and its own key for filtering
+    var countKey = type === 'mcp-warn' ? 'mcp' : type;
+    filterCounts[countKey] = (filterCounts[countKey] || 0) + 1;
     filterCounts.all++;
 
-    var icons = { success: '\u2713', error: '\u2717', skip: '\u2014', info: '\u2022' };
+    var icons = { success: '\u2713', error: '\u2717', skip: '\u2014', info: '\u2022', mcp: '\u25C6', 'mcp-warn': '\u26A0' };
 
     var now = new Date();
     var h = now.getHours() < 10 ? '0' + now.getHours() : String(now.getHours());
@@ -427,8 +444,10 @@
       '<span class="log-line__text">' + escapeHtml(text) + '</span>';
 
     var entry = document.createElement('div');
-    entry.className = 'log-line' + (type === 'error' ? ' log-line--error' : '');
-    entry.setAttribute('data-type', type);
+    // mcp-warn entries use 'mcp' data-type for filter grouping
+    var filterType = type === 'mcp-warn' ? 'mcp' : type;
+    entry.className = 'log-line' + (type === 'error' ? ' log-line--error' : '') + (type === 'mcp' ? ' log-line--mcp' : '') + (type === 'mcp-warn' ? ' log-line--mcp-warn' : '');
+    entry.setAttribute('data-type', filterType);
     entry.innerHTML = lineHtml;
 
     // Dynamic animation delay
@@ -512,7 +531,7 @@
     logLineCount = 0;
     logEntries = [];
     previewData = [];
-    filterCounts = { all: 0, success: 0, error: 0, skip: 0, info: 0 };
+    filterCounts = { all: 0, success: 0, error: 0, skip: 0, info: 0, mcp: 0 };
     if (resetCountdownTimer) { clearInterval(resetCountdownTimer); resetCountdownTimer = null; }
     if (logBody) { logBody.innerHTML = ''; logBody.removeAttribute('data-filter'); }
     if (previewBody) { previewBody.innerHTML = ''; }

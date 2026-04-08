@@ -1,0 +1,13 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "windows": "powershell -ExecutionPolicy Bypass -NoProfile -File .github/hooks/scripts/playwright-guard.ps1",
+        "linux": "bash .github/hooks/scripts/playwright-guard.sh",
+        "osx": "bash .github/hooks/scripts/playwright-guard.sh",
+        "timeout": 10
+      }
+    ]
+  }
+}

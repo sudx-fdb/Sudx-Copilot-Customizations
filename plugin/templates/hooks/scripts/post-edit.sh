@@ -36,6 +36,10 @@ try:
     if '.ai_workfolder/' in norm_path and 'content.md' not in norm_path:
         messages.append('REMINDER: Update .ai_workfolder/content.md')
 
+    # Detect manual edits to .vscode/mcp.json
+    if norm_path.endswith('.vscode/mcp.json'):
+        messages.append('WARNING: MCP config (.vscode/mcp.json) was manually edited. Run Sudx CC deploy to restore managed servers if needed.')
+
     ext = os.path.splitext(file_path)[1].lower()
     script_dir = os.path.dirname(os.path.abspath('__file__'))
 

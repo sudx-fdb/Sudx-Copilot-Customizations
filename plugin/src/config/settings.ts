@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import {
   IHookConfig,
+  IMcpServerConfig,
   IExtensionSettings,
   IUiSettings,
   LogLevel,
@@ -11,10 +12,14 @@ import {
   CONFIG_SECTION,
   CONFIG_KEYS,
   DEFAULT_HOOKS,
+  DEFAULT_MCP_SERVERS,
+  VALID_MCP_SERVERS,
   DEFAULT_DEPLOY_PATH,
   DEFAULT_AUTO_ACTIVATE_AGENT,
   DEFAULT_SHOW_STATUS_BAR,
   DEFAULT_LOG_LEVEL,
+  DEFAULT_MCP_DEPLOY_MODE,
+  VALID_MCP_DEPLOY_MODES,
   DEPLOY_PATH_ALLOWED_CHARS,
   DEPLOY_PATH_MAX_LENGTH,
   DEPLOY_PATH_BLOCKLIST,
@@ -165,6 +170,78 @@ export class SudxSettings {
     return value.toLowerCase() as LogLevel;
   }
 
+  getMcpDeployMode(): 'merge' | 'overwrite' | 'skip' {
+    this.logger.debug(MODULE, 'Getting MCP deploy mode');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.MCP_DEPLOY_MODE);
+    if (
+      typeof value !== 'string' ||
+      !(VALID_MCP_DEPLOY_MODES as readonly string[]).includes(value)
+    ) {
+      if (value !== undefined) {
+        this.logger.warn(MODULE, 'Invalid mcpDeployMode — using default', { value });
+      }
+      return DEFAULT_MCP_DEPLOY_MODE;
+    }
+    return value as 'merge' | 'overwrite' | 'skip';
+  }
+
+  getMcpHealthCheckInterval(): number {
+    this.logger.debug(MODULE, 'Getting MCP health check interval');
+    const value = this.getConfig().get<unknown>('mcpHealthCheckInterval');
+    if (typeof value !== 'number' || value < 10 || value > 300) {
+      if (value !== undefined) {
+        this.logger.warn(MODULE, 'Invalid mcpHealthCheckInterval — using default 60', { value });
+      }
+      return 60;
+    }
+    return value;
+  }
+
+  getMcpServerConfig(): IMcpServerConfig {
+    this.logger.debug(MODULE, 'Getting MCP server config');
+    const config = this.getConfig();
+    const raw = config.get<Record<string, unknown>>(CONFIG_KEYS.MCP_SERVERS);
+
+    if (!raw || typeof raw !== 'object') {
+      this.logger.warn(MODULE, 'Invalid MCP server config — using defaults');
+      return { ...DEFAULT_MCP_SERVERS };
+    }
+
+    const result: IMcpServerConfig = { ...DEFAULT_MCP_SERVERS };
+
+    for (const rawKey of Object.keys(raw)) {
+      if (!VALID_MCP_SERVERS.includes(rawKey)) {
+        this.logger.warn(MODULE, `Unknown MCP server key ignored: "${rawKey}"`, {
+          knownKeys: VALID_MCP_SERVERS,
+        });
+      }
+    }
+
+    for (const key of VALID_MCP_SERVERS) {
+      const value = raw[key];
+      if (typeof value === 'boolean') {
+        result[key] = value;
+      } else if (value !== undefined) {
+        this.logger.warn(MODULE, `Invalid MCP server value for ${key} — using default`, {
+          value,
+          type: typeof value,
+        });
+      }
+    }
+
+    this.logger.debug(MODULE, 'MCP server config resolved', result);
+    return result;
+  }
+
+  getMcpAllowLocalhost(): boolean {
+    this.logger.debug(MODULE, 'Getting mcpAllowLocalhost');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.MCP_ALLOW_LOCALHOST);
+    if (typeof value !== 'boolean') {
+      return false;
+    }
+    return value;
+  }
+
   getUiSettings(): IUiSettings {
     this.logger.debug(MODULE, 'Getting UI settings (batch read)');
     const config = this.getConfig();
@@ -209,6 +286,7 @@ export class SudxSettings {
       deployPath: this.getDeployPath(),
       showStatusBar: this.getShowStatusBar(),
       logLevel: this.getLogLevel(),
+      mcpDeployMode: this.getMcpDeployMode(),
     };
   }
 
@@ -250,6 +328,22 @@ export class SudxSettings {
       vscode.ConfigurationTarget.Workspace
     );
     this.logger.info(MODULE, 'Hook config updated', validated);
+  }
+
+  async setMcpServerConfig(config: IMcpServerConfig): Promise<void> {
+    this.logger.debug(MODULE, 'Setting MCP server config', config);
+    const validated: IMcpServerConfig = { ...DEFAULT_MCP_SERVERS };
+    for (const key of VALID_MCP_SERVERS) {
+      if (typeof config[key] === 'boolean') {
+        validated[key] = config[key];
+      }
+    }
+    await this.getConfig().update(
+      CONFIG_KEYS.MCP_SERVERS,
+      validated,
+      vscode.ConfigurationTarget.Workspace
+    );
+    this.logger.info(MODULE, 'MCP server config updated', validated);
   }
 
   async setAutoActivateAgent(value: boolean): Promise<void> {

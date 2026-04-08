@@ -181,6 +181,12 @@ export class PathUtils {
       return null;
     }
 
+    // Block UNC paths (\\server\share or //server/share)
+    if (/^\/\//.test(normalized) || /^\\\\/.test(rawPath)) {
+      this.logger.warn(MODULE, 'UNC path rejected');
+      return null;
+    }
+
     // Remove duplicate slashes
     normalized = normalized.replace(/\/+/g, '/');
 

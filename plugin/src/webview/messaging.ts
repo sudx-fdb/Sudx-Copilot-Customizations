@@ -12,6 +12,7 @@ import {
   MESSAGE_RATE_LIMIT,
   DEPLOY_DEBOUNCE_MS,
   VALID_HOOKS,
+  VALID_MCP_SERVERS,
   HOOK_NAME_MAX_LENGTH,
   RATE_LIMIT_WINDOW_MS,
 } from '../constants';
@@ -33,6 +34,12 @@ const VALID_MESSAGE_TYPES: WebviewMessageType[] = [
   'openLog',
   'pushUiSettings',
   'getLogData',
+  'getMcpServers',
+  'updateMcpServer',
+  'updateAllMcpServers',
+  'setMcpToken',
+  'clearMcpToken',
+  'getMcpTokenStatus',
 ];
 
 const VALID_HOOK_NAMES = VALID_HOOKS;
@@ -342,7 +349,83 @@ export class MessageHandler {
       case 'openLog':
       case 'pushUiSettings':
       case 'getLogData':
+      case 'getMcpServers':
         return null;
+
+      case 'updateMcpServer': {
+        const payload = message.payload as { serverName?: string; enabled?: boolean } | undefined;
+        if (!payload || typeof payload !== 'object') {
+          return 'Missing payload for updateMcpServer';
+        }
+        if (typeof payload.serverName !== 'string') {
+          return 'serverName must be a string';
+        }
+        if (!VALID_MCP_SERVERS.includes(payload.serverName)) {
+          return `Unknown MCP server: '${payload.serverName}'. Valid: ${VALID_MCP_SERVERS.join(', ')}`;
+        }
+        if (typeof payload.enabled !== 'boolean') {
+          return 'enabled must be a boolean';
+        }
+        return null;
+      }
+
+      case 'updateAllMcpServers': {
+        const payload = message.payload as Record<string, unknown> | undefined;
+        if (!payload || typeof payload !== 'object') {
+          return 'Missing payload for updateAllMcpServers';
+        }
+        for (const key of VALID_MCP_SERVERS) {
+          if (typeof payload[key] !== 'boolean') {
+            return `MCP server '${key}' must be a boolean`;
+          }
+        }
+        return null;
+      }
+
+      case 'setMcpToken': {
+        const payload = message.payload as { serverName?: string; token?: string } | undefined;
+        if (!payload || typeof payload !== 'object') {
+          return 'Missing payload for setMcpToken';
+        }
+        if (typeof payload.serverName !== 'string') {
+          return 'serverName must be a string';
+        }
+        if (!VALID_MCP_SERVERS.includes(payload.serverName)) {
+          return `Unknown MCP server: '${payload.serverName}'. Valid: ${VALID_MCP_SERVERS.join(', ')}`;
+        }
+        if (typeof payload.token !== 'string' || payload.token.length === 0) {
+          return 'token must be a non-empty string';
+        }
+        return null;
+      }
+
+      case 'clearMcpToken': {
+        const payload = message.payload as { serverName?: string } | undefined;
+        if (!payload || typeof payload !== 'object') {
+          return 'Missing payload for clearMcpToken';
+        }
+        if (typeof payload.serverName !== 'string') {
+          return 'serverName must be a string';
+        }
+        if (!VALID_MCP_SERVERS.includes(payload.serverName)) {
+          return `Unknown MCP server: '${payload.serverName}'. Valid: ${VALID_MCP_SERVERS.join(', ')}`;
+        }
+        return null;
+      }
+
+      case 'getMcpTokenStatus': {
+        const payload = message.payload as { serverName?: string } | undefined;
+        if (!payload || typeof payload !== 'object') {
+          return 'Missing payload for getMcpTokenStatus';
+        }
+        if (typeof payload.serverName !== 'string') {
+          return 'serverName must be a string';
+        }
+        if (!VALID_MCP_SERVERS.includes(payload.serverName)) {
+          return `Unknown MCP server: '${payload.serverName}'. Valid: ${VALID_MCP_SERVERS.join(', ')}`;
+        }
+        return null;
+      }
 
       default:
         return 'Unknown message type';

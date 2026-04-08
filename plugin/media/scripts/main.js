@@ -73,6 +73,11 @@
         window.SudxDeploy.init();
       }
 
+      // Init MCP module
+      if (window.SudxMcp) {
+        window.SudxMcp.init();
+      }
+
       // Init matrix rain
       var canvas = document.getElementById('matrix-canvas');
       if (canvas && animations.initMatrixRain) {
@@ -214,6 +219,13 @@
       hookToggles[i].addEventListener('keydown', handleToggleKeydown);
     }
 
+    // MCP server toggles
+    var mcpToggles = document.querySelectorAll('.toggle[data-mcp-server-toggle]');
+    for (var m = 0; m < mcpToggles.length; m++) {
+      mcpToggles[m].addEventListener('click', handleMcpServerToggle);
+      mcpToggles[m].addEventListener('keydown', handleToggleKeydown);
+    }
+
     // Agent toggle
     if (agentToggle) {
       agentToggle.addEventListener('click', handleAgentToggle);
@@ -254,13 +266,15 @@
     messaging.onMessage('statusData', handleStatusData);
     messaging.onMessage('hookUpdated', handleHookUpdated);
     messaging.onMessage('uiSettings', handleUiSettings);
-    log('registerMessageHandlers', 'registered 4 handlers');
+    messaging.onMessage('mcpServersData', handleMcpServersData);
+    log('registerMessageHandlers', 'registered 5 handlers');
   }
 
   function requestInitialData() {
     log('requestInitialData', 'attempt=' + retryCount);
     messaging.send('getConfig');
     messaging.send('getStatus');
+    messaging.send('getMcpServers');
 
     // Config timeout — retry or show error
     configTimer = setTimeout(function () {
@@ -362,15 +376,26 @@
 
     // Update hook toggles
     if (data.hooks) {
-      var hookNames = ['sessionContext', 'protectPlans', 'postEdit', 'planReminder'];
-      for (var i = 0; i < hookNames.length; i++) {
-        setToggleState(hookNames[i], data.hooks[hookNames[i]]);
+      var hookKeys = Object.keys(data.hooks);
+      for (var i = 0; i < hookKeys.length; i++) {
+        setToggleState(hookKeys[i], data.hooks[hookKeys[i]]);
       }
     }
 
     // Agent toggle
     if (data.autoActivateAgent !== undefined && agentToggle) {
       updateToggleVisual(agentToggle, data.autoActivateAgent);
+    }
+
+    // MCP server toggles
+    if (data.mcpServers) {
+      var mcpKeys = Object.keys(data.mcpServers);
+      for (var k = 0; k < mcpKeys.length; k++) {
+        var mcpToggle = document.querySelector('.toggle[data-mcp-server-toggle="' + mcpKeys[k] + '"]');
+        if (mcpToggle) {
+          updateToggleVisual(mcpToggle, data.mcpServers[mcpKeys[k]]);
+        }
+      }
     }
 
     // File count
@@ -437,6 +462,20 @@
         animations.countUp(fileCount, data.filesCount, 600, ' files');
       }
     }
+
+    // MCP deployment status
+    var mcpStatusEl = document.getElementById('mcp-deploy-status');
+    if (mcpStatusEl) {
+      if (data.mcpDeployed && data.mcpServerCount > 0) {
+        var mcpDate = data.lastMcpDeployDate ? formatDate(data.lastMcpDeployDate) : '';
+        var servers = Array.isArray(data.mcpServers) ? data.mcpServers.join(', ') : '';
+        mcpStatusEl.textContent = 'MCP: ' + data.mcpServerCount + ' servers (' + servers + ')' + (mcpDate ? ' — ' + mcpDate : '');
+        mcpStatusEl.style.display = '';
+      } else {
+        mcpStatusEl.textContent = 'MCP: Not deployed';
+        mcpStatusEl.style.display = '';
+      }
+    }
   }
 
   /** @param {unknown} payload */
@@ -450,10 +489,36 @@
       return;
     }
 
-    var hookNames = ['sessionContext', 'protectPlans', 'postEdit', 'planReminder'];
-    for (var i = 0; i < hookNames.length; i++) {
-      if (data[hookNames[i]] !== undefined) {
-        setToggleState(hookNames[i], data[hookNames[i]]);
+    var hookKeys = Object.keys(data);
+    for (var i = 0; i < hookKeys.length; i++) {
+      if (hookKeys[i] !== 'hookName' && hookKeys[i] !== 'enabled' && data[hookKeys[i]] !== undefined) {
+        setToggleState(hookKeys[i], data[hookKeys[i]]);
+      }
+    }
+  }
+
+  /** @param {unknown} payload */
+  function handleMcpServersData(payload) {
+    log('handleMcpServersData', JSON.stringify(payload));
+    if (!payload || !Array.isArray(payload)) { log('handleMcpServersData', 'invalid payload'); return; }
+    var servers = payload;
+    var configuredNames = {};
+    for (var i = 0; i < servers.length; i++) {
+      if (servers[i] && servers[i].name && servers[i].configured) {
+        configuredNames[servers[i].name] = true;
+      }
+    }
+    var dots = document.querySelectorAll('.mcp-status-dot');
+    for (var j = 0; j < dots.length; j++) {
+      var serverKey = dots[j].getAttribute('data-mcp-server');
+      if (serverKey && configuredNames[serverKey]) {
+        dots[j].classList.remove('status-dot--inactive');
+        dots[j].classList.add('status-dot--active');
+        dots[j].setAttribute('title', 'Configured');
+      } else {
+        dots[j].classList.remove('status-dot--active');
+        dots[j].classList.add('status-dot--inactive');
+        dots[j].setAttribute('title', 'Not configured');
       }
     }
   }
@@ -476,6 +541,16 @@
     var newState = !isActive;
     updateToggleVisual(agentToggle, newState);
     messaging.send('toggleAgent', { enabled: newState });
+  }
+
+  function handleMcpServerToggle() {
+    var serverName = this.getAttribute('data-mcp-server-toggle');
+    if (!serverName) { return; }
+    log('handleMcpServerToggle', serverName);
+    var isActive = this.getAttribute('aria-checked') === 'true';
+    var newState = !isActive;
+    updateToggleVisual(this, newState);
+    messaging.send('updateMcpServer', { serverName: serverName, enabled: newState });
   }
 
   /** @param {KeyboardEvent} e */

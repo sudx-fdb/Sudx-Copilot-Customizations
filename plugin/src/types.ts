@@ -6,6 +6,7 @@ export enum TemplateCategory {
   Prompts = 'prompts',
   Skills = 'skills',
   Hooks = 'hooks',
+  Mcp = 'mcp',
 }
 
 export enum DeploymentState {
@@ -25,6 +26,13 @@ export enum LogLevel {
   Error = 'error',
 }
 
+export enum McpTransport {
+  Stdio = 'stdio',
+  Sse = 'sse',
+}
+
+export type McpDeployMode = 'merge' | 'overwrite' | 'skip';
+
 // ─── Configuration Interfaces ────────────────────────────────────────────────
 
 export interface IHookConfig {
@@ -34,6 +42,9 @@ export interface IHookConfig {
   planReminder: boolean;
   workflowSelector: boolean;
   protectWorkflow: boolean;
+  figmaGuard: boolean;
+  playwrightGuard: boolean;
+  crawl4aiGuard: boolean;
   [key: string]: boolean;
 }
 
@@ -49,6 +60,7 @@ export interface IExtensionSettings {
   deployPath: string;
   showStatusBar: boolean;
   logLevel: LogLevel;
+  mcpDeployMode: McpDeployMode;
 }
 
 // ─── Template Interfaces ─────────────────────────────────────────────────────
@@ -110,10 +122,18 @@ export interface ICopyFileResult {
 
 // ─── State Interfaces ────────────────────────────────────────────────────────
 
+export interface IMcpDeploymentState {
+  lastMcpDeployDate: string | null;
+  deployedServers: string[];
+  mcpConfigBackupPath: string | null;
+  mergeConflicts: string[];
+}
+
 export interface IDeploymentHistory {
   date: string;
   filesDeployed: number;
   hooksEnabled: string[];
+  mcpServersDeployed: string[];
   duration: number;
   success: boolean;
 }
@@ -145,7 +165,13 @@ export type WebviewMessageType =
   | 'resetConfig'
   | 'openLog'
   | 'pushUiSettings'
-  | 'getLogData';
+  | 'getLogData'
+  | 'getMcpServers'
+  | 'updateMcpServer'
+  | 'updateAllMcpServers'
+  | 'setMcpToken'
+  | 'clearMcpToken'
+  | 'getMcpTokenStatus';
 
 export type WebviewResponseType =
   | 'configData'
@@ -157,6 +183,8 @@ export type WebviewResponseType =
   | 'hookUpdated'
   | 'uiSettings'
   | 'logData'
+  | 'mcpServersData'
+  | 'mcpTokenStatus'
   | 'error';
 
 export interface IWebviewMessage {
@@ -198,12 +226,16 @@ export interface IWebviewResponse {
   error?: string;
 }
 
+export type McpLogEntryType = 'mcp-merge' | 'mcp-validate' | 'mcp-health' | 'mcp-conflict' | 'mcp-backup' | 'mcp-skip';
+
 export interface IDeployProgressPayload {
   state: DeploymentState;
   current: number;
   total: number;
   currentFile: string;
   percent: number;
+  mcpPhase?: string;
+  mcpLogType?: McpLogEntryType;
 }
 
 export interface IConfigDataPayload {
@@ -215,6 +247,7 @@ export interface IConfigDataPayload {
   fileCount: number;
   uiSettings?: IUiSettings;
   featureFlags?: IFeatureFlags;
+  mcpServers?: IMcpServerConfig;
 }
 
 export interface IStatusDataPayload {
@@ -222,11 +255,61 @@ export interface IStatusDataPayload {
   lastDeployDate: string | null;
   filesCount: number;
   deploymentState: DeploymentState;
+  mcpDeployed: boolean;
+  lastMcpDeployDate: string | null;
+  mcpServerCount: number;
+  mcpServers: string[];
 }
 
 export interface IUpdateHookPayload {
   hookName: string;
   enabled: boolean;
+}
+
+export interface IMcpServerStatus {
+  name: string;
+  transport: McpTransport;
+  configured: boolean;
+  enabled: boolean;
+  command?: string;
+  url?: string;
+}
+
+export interface IMcpServerConfig {
+  playwright: boolean;
+  figma: boolean;
+  crawl4ai: boolean;
+  [key: string]: boolean;
+}
+
+export interface IMcpServerRuntime {
+  serverName: string;
+  pid: number | null;
+  startTime: string | null;
+  status: 'running' | 'stopped' | 'error' | 'starting';
+  outputChannelName: string | null;
+}
+
+export interface IMcpHealthStatus {
+  serverName: string;
+  healthy: boolean;
+  lastCheck: string;
+  error?: string;
+  transport: McpTransport;
+}
+
+export interface IMcpValidationResult {
+  valid: boolean;
+  warnings: IMcpValidationIssue[];
+  errors: IMcpValidationIssue[];
+}
+
+export interface IMcpValidationIssue {
+  server: string;
+  code: string;
+  message: string;
+  severity: 'warning' | 'error';
+  suggestion: string;
 }
 
 // ─── Hook Interfaces ─────────────────────────────────────────────────────────
@@ -365,4 +448,36 @@ export interface IThemeConfig {
 export interface ILogFilterState {
   activeFilter: 'all' | 'success' | 'error' | 'skip';
   persistTo: 'session' | 'local';
+}
+
+// ─── MCP Interfaces ─────────────────────────────────────────────────────────
+
+export interface IMcpConfig {
+  mcpServers?: Record<string, IMcpServerEntry>;
+  inputs?: IMcpInput[];
+  _sudxMeta?: IMcpSudxMeta;
+}
+
+export interface IMcpServerEntry {
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  cwd?: string;
+  url?: string;
+  _sudxManaged?: boolean;
+  [key: string]: unknown;
+}
+
+export interface IMcpInput {
+  id: string;
+  type: string;
+  description: string;
+  password?: boolean;
+  default?: string;
+}
+
+export interface IMcpSudxMeta {
+  version: string;
+  deployDate: string;
+  managedServers: string[];
 }

@@ -881,3 +881,252 @@
   padding: var(--space-xs) 0;
   border-bottom: 1px solid rgba(0, 255, 65, 0.03);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MCP Components
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── MCP Section ──────────────────────────────────────────────────────────── */
+
+.mcp-section {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-md);
+  border: var(--border-dim);
+  border-radius: var(--radius-md, 4px);
+  position: relative;
+}
+
+.mcp-section__title {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--green-primary);
+  text-shadow: var(--glow-subtle);
+  margin-bottom: var(--space-md);
+}
+
+.mcp-section__title::before {
+  content: '┌── ';
+  color: var(--text-dim);
+}
+
+.mcp-section.skeleton-loading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* ─── MCP Server Card ──────────────────────────────────────────────────────── */
+
+.mcp-server-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) 0;
+  border-bottom: var(--border-dim);
+}
+
+.mcp-server-card:last-child {
+  border-bottom: none;
+}
+
+.mcp-server-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.mcp-server-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.mcp-server-card__name {
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+}
+
+.mcp-server-card__name::before {
+  content: '◆ ';
+  color: var(--vscode-charts-blue, #4fc1ff);
+}
+
+.mcp-server-card__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* ─── MCP Transport Badge ──────────────────────────────────────────────────── */
+
+.mcp-transport-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+}
+
+.mcp-transport-badge--stdio {
+  color: var(--vscode-charts-blue, #4fc1ff);
+  border-color: var(--vscode-charts-blue, #4fc1ff);
+  text-shadow: 0 0 4px rgba(79, 193, 255, 0.3);
+}
+
+.mcp-transport-badge--sse {
+  color: var(--vscode-charts-purple, #c586c0);
+  border-color: var(--vscode-charts-purple, #c586c0);
+  text-shadow: 0 0 4px rgba(197, 134, 192, 0.3);
+}
+
+/* ─── MCP Health Dot ───────────────────────────────────────────────────────── */
+
+.mcp-health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.mcp-health-dot--healthy {
+  background-color: var(--green-primary);
+  box-shadow: 0 0 6px var(--green-primary);
+  animation: mcpHealthPulse 2s ease-in-out infinite;
+}
+
+.mcp-health-dot--unhealthy {
+  background-color: var(--red, #ff0033);
+  box-shadow: 0 0 6px var(--red, #ff0033);
+  animation: mcpHealthPulse 1.5s ease-in-out infinite;
+}
+
+.mcp-health-dot--unknown {
+  background-color: var(--text-dim);
+}
+
+@keyframes mcpHealthPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ─── MCP Token Input ──────────────────────────────────────────────────────── */
+
+.mcp-token-input {
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.3));
+  border: 1px solid var(--green-primary);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: var(--space-xs) var(--space-sm);
+  width: 100%;
+  max-width: 280px;
+  -webkit-text-security: disc;
+}
+
+.mcp-token-input:focus {
+  outline: none;
+  box-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
+}
+
+.mcp-token-btn {
+  background: none;
+  border: var(--border-glow);
+  border-radius: 3px;
+  color: var(--green-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-sm);
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.mcp-token-btn:hover {
+  text-shadow: var(--glow-text);
+  border-color: var(--green-bright, #00ff41);
+}
+
+/* ─── MCP Token Status ─────────────────────────────────────────────────────── */
+
+.mcp-token-status {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mcp-token-status--set {
+  color: var(--green-primary);
+}
+
+.mcp-token-status--not-set {
+  color: var(--text-dim);
+}
+
+/* ─── MCP Log Entry ────────────────────────────────────────────────────────── */
+
+.mcp-log-entry {
+  color: var(--vscode-charts-blue, #4fc1ff);
+}
+
+.mcp-log-entry__badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--vscode-charts-blue, #4fc1ff);
+  border: 1px solid var(--vscode-charts-blue, #4fc1ff);
+  border-radius: 2px;
+  padding: 0 3px;
+  margin-right: 4px;
+}
+
+/* ─── MCP Filter Button ───────────────────────────────────────────────────── */
+
+.mcp-filter-btn {
+  background: none;
+  border: 1px solid var(--vscode-charts-blue, #4fc1ff);
+  color: var(--vscode-charts-blue, #4fc1ff);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  padding: 2px var(--space-sm);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.mcp-filter-btn:hover,
+.mcp-filter-btn.active {
+  background: rgba(79, 193, 255, 0.1);
+  text-shadow: 0 0 4px rgba(79, 193, 255, 0.4);
+}
+
+/* ─── MCP Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 400px) {
+  .mcp-server-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+  .mcp-server-card__controls {
+    align-self: flex-end;
+  }
+}
+
+/* ─── MCP Reduced Motion ──────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .mcp-health-dot--healthy,
+  .mcp-health-dot--unhealthy {
+    animation: none;
+  }
+  .mcp-transport-badge--stdio,
+  .mcp-transport-badge--sse {
+    text-shadow: none;
+  }
+}

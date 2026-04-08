@@ -53,6 +53,27 @@ const HOOK_DEFINITIONS: Omit<IHookDefinition, 'enabled'>[] = [
     configFile: HOOK_FILE_MAP.protectWorkflow.config,
     scriptFiles: HOOK_FILE_MAP.protectWorkflow.scripts,
   },
+  {
+    name: 'figmaGuard',
+    displayName: STRINGS.HOOK_FIGMA_GUARD,
+    description: STRINGS.HOOK_FIGMA_GUARD_DESC,
+    configFile: HOOK_FILE_MAP.figmaGuard.config,
+    scriptFiles: HOOK_FILE_MAP.figmaGuard.scripts,
+  },
+  {
+    name: 'playwrightGuard',
+    displayName: STRINGS.HOOK_PLAYWRIGHT_GUARD,
+    description: STRINGS.HOOK_PLAYWRIGHT_GUARD_DESC,
+    configFile: HOOK_FILE_MAP.playwrightGuard.config,
+    scriptFiles: HOOK_FILE_MAP.playwrightGuard.scripts,
+  },
+  {
+    name: 'crawl4aiGuard',
+    displayName: STRINGS.HOOK_CRAWL4AI_GUARD,
+    description: STRINGS.HOOK_CRAWL4AI_GUARD_DESC,
+    configFile: HOOK_FILE_MAP.crawl4aiGuard.config,
+    scriptFiles: HOOK_FILE_MAP.crawl4aiGuard.scripts,
+  },
 ];
 
 const VALID_HOOK_NAMES = HOOK_DEFINITIONS.map((h) => h.name);

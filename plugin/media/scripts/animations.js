@@ -467,6 +467,7 @@
   function observeEntrance(selector, animationClass) {
     log('observeEntrance', selector);
     animationClass = animationClass || 'animate-fade-slide-up';
+    _entranceAnimClass = animationClass;
     if (!window.IntersectionObserver) {
       var els = document.querySelectorAll(selector);
       for (var i = 0; i < els.length; i++) { els[i].style.opacity = '1'; }
@@ -474,7 +475,6 @@
     }
 
     if (!_entranceObserver) {
-      _entranceAnimClass = animationClass;
       _entranceObserver = new IntersectionObserver(function (entries) {
         for (var j = 0; j < entries.length; j++) {
           if (entries[j].isIntersecting) {

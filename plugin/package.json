@@ -2,7 +2,7 @@
   "name": "sudx-copilot-customizations",
   "displayName": "Sudx Copilot Customizations",
   "description": "Deploy and manage Copilot AI agent customization files for your workspace",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "sudx",
   "engines": {
     "vscode": "^1.85.0"
@@ -41,6 +41,30 @@
       {
         "command": "sudx-ai.showLog",
         "title": "Sudx CC: Show Log"
+      },
+      {
+        "command": "sudx-ai.rollbackMcp",
+        "title": "Sudx CC: Rollback MCP Configuration"
+      },
+      {
+        "command": "sudx-ai.mcpStart",
+        "title": "Sudx CC: Start MCP Server",
+        "enablement": "workspaceFolderCount != 0"
+      },
+      {
+        "command": "sudx-ai.mcpStop",
+        "title": "Sudx CC: Stop MCP Server",
+        "enablement": "workspaceFolderCount != 0"
+      },
+      {
+        "command": "sudx-ai.mcpRestart",
+        "title": "Sudx CC: Restart MCP Server",
+        "enablement": "workspaceFolderCount != 0"
+      },
+      {
+        "command": "sudx-ai.mcpStatus",
+        "title": "Sudx CC: MCP Server Status",
+        "enablement": "workspaceFolderCount != 0"
       }
     ],
     "configuration": [
@@ -54,7 +78,11 @@
               "protectPlans": true,
               "postEdit": true,
               "planReminder": true,
-              "workflowSelector": true
+              "workflowSelector": true,
+              "protectWorkflow": true,
+              "figmaGuard": true,
+              "playwrightGuard": true,
+              "crawl4aiGuard": true
             },
             "markdownDescription": "Enable or disable individual automation hooks. Each hook controls a specific automation behavior.",
             "order": 1,
@@ -83,6 +111,26 @@
                 "type": "boolean",
                 "default": true,
                 "markdownDescription": "Inject workflow selection reminder on every prompt"
+              },
+              "protectWorkflow": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Enforce single-checkmark-per-edit rule for plan files"
+              },
+              "figmaGuard": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Enforce Figma API best practices (depth-first fetching, safe operations)"
+              },
+              "playwrightGuard": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Enforce Playwright best practices (HTTPS navigation, snapshot-before-click, vision cap)"
+              },
+              "crawl4aiGuard": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Enforce crawl safety (SSRF prevention, depth limits, rate awareness)"
               }
             }
           },
@@ -117,6 +165,65 @@
             "default": "info",
             "markdownDescription": "Log level for the Sudx CC output channel. Use `debug` for detailed diagnostics.",
             "order": 8
+          },
+          "sudx-ai.mcpDeployMode": {
+            "type": "string",
+            "enum": [
+              "merge",
+              "overwrite",
+              "skip"
+            ],
+            "default": "merge",
+            "markdownDescription": "How MCP server config (`.vscode/mcp.json`) is deployed:\n- **merge** — Sudx servers are merged into existing config, user servers are preserved\n- **overwrite** — Existing config is replaced entirely\n- **skip** — MCP config is not deployed",
+            "order": 9
+          },
+          "sudx-ai.mcpServers": {
+            "type": "object",
+            "default": {
+              "playwright": true,
+              "figma": true,
+              "crawl4ai": true
+            },
+            "markdownDescription": "Enable or disable individual MCP servers for deployment. Disabled servers are excluded from `.vscode/mcp.json`.",
+            "properties": {
+              "playwright": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Deploy **Playwright** MCP server (browser automation via accessibility tree)"
+              },
+              "figma": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Deploy **Figma** MCP server (design data extraction)"
+              },
+              "crawl4ai": {
+                "type": "boolean",
+                "default": true,
+                "markdownDescription": "Deploy **Crawl4ai** MCP server (web crawling, RAG, structured extraction)"
+              }
+            },
+            "additionalProperties": false,
+            "order": 10
+          },
+          "sudx-ai.mcpHealthCheckInterval": {
+            "type": "number",
+            "default": 60,
+            "minimum": 10,
+            "maximum": 300,
+            "markdownDescription": "Interval (in seconds) for periodic MCP server health checks. Lower values give faster feedback but use more resources.",
+            "order": 11
+          },
+          "sudx-ai.mcpValidateOnDeploy": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Validate MCP server configuration before deploying. Checks command availability, URL formats, and token presence.",
+            "order": 12
+          },
+          "sudx-ai.mcpAllowLocalhost": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "Allow MCP tools to access `localhost` and `127.0.0.1`. **Disabled by default** for SSRF prevention. Enable only for local development testing.",
+            "order": 13
           }
         }
       },

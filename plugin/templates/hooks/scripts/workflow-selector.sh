@@ -24,6 +24,7 @@ BEFORE working on this prompt, determine the correct workflow:
    - Documentation only -> doc skill (no plan needed)
    - Explain/Review/Analyze -> execute directly (no plan needed)
    - Quick single-line fix -> execute directly
+   - Web/Browser/Design interaction -> check MCP tools (Playwright, Figma, Crawl4ai) -- see mcp-tools.instructions.md
 3. READ the matching skill BEFORE starting: .github/skills/{skill-name}/SKILL.md
 4. READ the relevant instructions BEFORE starting: .github/instructions/*.md
 

@@ -1,4 +1,4 @@
-import { IHookConfig, LogLevel } from './types';
+import { IHookConfig, IMcpServerConfig, LogLevel } from './types';
 
 // ─── Extension Identity ──────────────────────────────────────────────────────
 
@@ -13,6 +13,11 @@ export const COMMANDS = {
   DEPLOY: `${COMMAND_PREFIX}.deploy`,
   RESET_CONFIG: `${COMMAND_PREFIX}.resetConfig`,
   SHOW_LOG: `${COMMAND_PREFIX}.showLog`,
+  ROLLBACK_MCP: `${COMMAND_PREFIX}.rollbackMcp`,
+  MCP_START: `${COMMAND_PREFIX}.mcpStart`,
+  MCP_STOP: `${COMMAND_PREFIX}.mcpStop`,
+  MCP_RESTART: `${COMMAND_PREFIX}.mcpRestart`,
+  MCP_STATUS: `${COMMAND_PREFIX}.mcpStatus`,
 } as const;
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -25,6 +30,9 @@ export const CONFIG_KEYS = {
   DEPLOY_PATH: 'deployPath',
   SHOW_STATUS_BAR: 'showStatusBar',
   LOG_LEVEL: 'logLevel',
+  MCP_DEPLOY_MODE: 'mcpDeployMode',
+  MCP_SERVERS: 'mcpServers',
+  MCP_ALLOW_LOCALHOST: 'mcpAllowLocalhost',
 } as const;
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -36,9 +44,20 @@ export const DEFAULT_HOOKS: IHookConfig = {
   planReminder: true,
   workflowSelector: true,
   protectWorkflow: true,
+  figmaGuard: true,
+  playwrightGuard: true,
+  crawl4aiGuard: true,
 };
 
 export const VALID_HOOKS: string[] = Object.keys(DEFAULT_HOOKS);
+
+export const DEFAULT_MCP_SERVERS: IMcpServerConfig = {
+  playwright: true,
+  figma: true,
+  crawl4ai: true,
+};
+
+export const VALID_MCP_SERVERS: string[] = Object.keys(DEFAULT_MCP_SERVERS);
 
 export const DEFAULT_DEPLOY_PATH = '.github';
 export const DEFAULT_LOG_LEVEL: LogLevel = LogLevel.Warn;
@@ -53,6 +72,7 @@ export const TEMPLATE_DIRS = [
   'prompts',
   'skills',
   'hooks',
+  'mcp',
 ] as const;
 
 export const FILE_PATTERNS_EXCLUDE = ['info.md'];
@@ -68,6 +88,12 @@ export const STATE_KEYS = {
   EXTENSION_VERSION: 'sudxAi.extensionVersion',
   FIRST_INSTALL_DATE: 'sudxAi.firstInstallDate',
   DEPLOYMENT_COUNT: 'sudxAi.deploymentCount',
+  MCP_DEPLOY_DATE: 'sudxAi.mcpDeployDate',
+  MCP_DEPLOYED_SERVERS: 'sudxAi.mcpDeployedServers',
+  MCP_CONFIG_BACKUP: 'sudxAi.mcpConfigBackup',
+  MCP_MERGE_CONFLICTS: 'sudxAi.mcpMergeConflicts',
+  MCP_HEALTH_CACHE: 'sudxAi.mcpHealthCache',
+  MCP_TEMPLATE_VERSION: 'sudxAi.mcpTemplateVersion',
 } as const;
 
 export const CURRENT_STATE_VERSION = 1;
@@ -114,6 +140,73 @@ export const DEPLOY_DEBOUNCE_MS = 5_000;
 export const REQUEST_TIMEOUT_MS = 30_000;
 export const HOOK_NAME_MAX_LENGTH = 50;
 export const RATE_LIMIT_WINDOW_MS = 1_000;
+// ─── MCP ─────────────────────────────────────────────────────────────────
+
+/** Metadata key embedded per MCP server to identify Sudx-managed entries */
+export const SUDX_MCP_MARKER_KEY = '_sudxManaged';
+
+/** Target filename for the merged MCP configuration */
+export const MCP_CONFIG_FILENAME = 'mcp.json';
+
+/** Target directory relative to workspace root for MCP config */
+export const MCP_DEPLOY_TARGET = '.vscode';
+
+/** Valid MCP deployment modes */
+export const VALID_MCP_DEPLOY_MODES = ['merge', 'overwrite', 'skip'] as const;
+
+/** Default MCP deployment mode */
+export const DEFAULT_MCP_DEPLOY_MODE: 'merge' | 'overwrite' | 'skip' = 'merge';
+
+/** Timeout for MCP server health check in ms */
+export const MCP_HEALTH_CHECK_TIMEOUT_MS = 3000;
+
+/** Base delay for MCP retry operations (exponential backoff) */
+export const MCP_RETRY_BASE_MS = 500;
+
+/** Maximum retry count for MCP operations */
+export const MCP_RETRY_MAX_COUNT = 3;
+
+/** Timeout for MCP health check probe in ms */
+export const MCP_HEALTH_TIMEOUT_MS = 3000;
+
+/** Timeout for npx availability check in ms */
+export const MCP_NPX_CHECK_TIMEOUT_MS = 5000;
+
+/** Retryable error codes for MCP file operations */
+export const MCP_RETRYABLE_ERRORS = ['EBUSY', 'EPERM', 'EACCES', 'EAGAIN'];
+
+/** Protocols blocked by MCP network security for SSRF prevention */
+export const MCP_BLOCKED_PROTOCOLS: string[] = ['file:', 'data:', 'javascript:', 'vbscript:', 'ftp:'];
+
+/** RFC 1918 and special-use IP ranges for private IP detection */
+export const MCP_PRIVATE_IP_RANGES: Array<{ prefix: string; description: string }> = [
+  { prefix: '10.', description: 'RFC 1918 Class A (10.0.0.0/8)' },
+  { prefix: '172.16.', description: 'RFC 1918 Class B (172.16.0.0/12)' },
+  { prefix: '192.168.', description: 'RFC 1918 Class C (192.168.0.0/16)' },
+  { prefix: '127.', description: 'Loopback (127.0.0.0/8)' },
+  { prefix: '169.254.', description: 'Link-Local (169.254.0.0/16)' },
+  { prefix: '0.0.0.0', description: 'Unspecified address' },
+  { prefix: 'fc', description: 'IPv6 Unique Local (fc00::/7)' },
+  { prefix: 'fd', description: 'IPv6 Unique Local (fd00::/8)' },
+  { prefix: 'fe80', description: 'IPv6 Link-Local (fe80::/10)' },
+  { prefix: '::1', description: 'IPv6 Loopback' },
+];
+
+/** Crawl depth threshold that triggers guard warning */
+export const MAX_CRAWL_DEPTH_WARNING = 3;
+
+/** Figma depth threshold that triggers guard warning */
+export const MAX_FIGMA_DEPTH_WARNING = 2;
+
+/** Figma batch image export threshold that triggers guard warning */
+export const MAX_FIGMA_BATCH_IMAGES = 10;
+
+/** Playwright tools that should be preceded by a snapshot */
+export const PLAYWRIGHT_SNAPSHOT_REQUIRED_TOOLS = [
+  'browser_click',
+  'browser_type',
+  'browser_drag',
+] as const;
 
 // ─── Paths ───────────────────────────────────────────────────────────────────
 
@@ -179,6 +272,27 @@ export const HOOK_FILE_MAP: Record<string, { config: string; scripts: string[] }
       'hooks/scripts/protect-workflow-post.sh',
     ],
   },
+  figmaGuard: {
+    config: 'hooks/figma-guard.json',
+    scripts: [
+      'hooks/scripts/figma-guard.ps1',
+      'hooks/scripts/figma-guard.sh',
+    ],
+  },
+  playwrightGuard: {
+    config: 'hooks/playwright-guard.json',
+    scripts: [
+      'hooks/scripts/playwright-guard.ps1',
+      'hooks/scripts/playwright-guard.sh',
+    ],
+  },
+  crawl4aiGuard: {
+    config: 'hooks/crawl4ai-guard.json',
+    scripts: [
+      'hooks/scripts/crawl4ai-guard.ps1',
+      'hooks/scripts/crawl4ai-guard.sh',
+    ],
+  },
 };
 
 // ─── User-Facing Strings (Language Pack) ─────────────────────────────────────
@@ -225,6 +339,8 @@ export const STRINGS = {
   WV_SECTION_STATUS: 'Status',
   WV_SECTION_HOOKS: 'Hooks Configuration',
   WV_SECTION_HOOKS_DESC: 'Enable or disable individual automation hooks',
+  WV_SECTION_MCP: 'MCP Servers',
+  WV_SECTION_MCP_DESC: 'Configured Model Context Protocol servers',
   WV_SECTION_AGENT: 'Agent Activation',
   WV_SECTION_DEPLOY: 'Deploy',
   WV_SECTION_LOG: 'Deployment Log',
@@ -250,6 +366,83 @@ export const STRINGS = {
   HOOK_WORKFLOW_SELECTOR_DESC: 'Inject workflow selection reminder on every prompt',
   HOOK_PROTECT_WORKFLOW: 'Workflow Protection',
   HOOK_PROTECT_WORKFLOW_DESC: 'Enforce single-checkmark-per-edit rule for plan files',
+  HOOK_FIGMA_GUARD: 'Figma Guard',
+  HOOK_FIGMA_GUARD_DESC: 'Enforce Figma API best practices (depth-first fetching, safe operations)',
+  HOOK_PLAYWRIGHT_GUARD: 'Playwright Guard',
+  HOOK_PLAYWRIGHT_GUARD_DESC: 'Enforce Playwright best practices (HTTPS navigation, snapshot-before-click, vision cap)',
+  HOOK_CRAWL4AI_GUARD: 'Crawl4ai Guard',
+  HOOK_CRAWL4AI_GUARD_DESC: 'Enforce crawl safety (SSRF prevention, depth limits, rate awareness)',
+
+  // MCP
+  MCP_DEPLOY_SKIPPED: 'MCP deployment skipped by configuration',
+  MCP_DEPLOY_SUCCESS: (deployed: number, preserved: number) =>
+    `MCP deployed: ${deployed} servers updated, ${preserved} user servers preserved`,
+  MCP_DEPLOY_FAILED: 'MCP deployment failed — check log for details',
+  MCP_NO_WORKSPACE: 'No workspace root — MCP config not deployed',
+  MCP_CONFIG_SYNTAX_ERROR: 'Existing mcp.json has syntax errors — backed up and deploying fresh',
+  MCP_CONFLICT: (name: string) => `MCP conflict: user server "${name}" overwritten by Sudx template`,
+  MCP_ROLLBACK_CONFIRM: 'Rollback MCP config to the previous backup?',
+  MCP_ROLLBACK_SUCCESS: 'MCP config rolled back successfully.',
+  MCP_ROLLBACK_FAILED: 'MCP rollback failed — check log for details.',
+  MCP_ROLLBACK_NO_BACKUP: 'No MCP backup available to rollback to.',
+
+  // MCP Error strings
+  ERR_MCP_CONFIG_PARSE: 'Failed to parse existing MCP configuration',
+  ERR_MCP_MERGE_FAILED: 'MCP configuration merge failed',
+  ERR_MCP_BACKUP_FAILED: 'Failed to backup existing MCP configuration',
+  ERR_MCP_WRITE_FAILED: 'Failed to write MCP configuration',
+  ERR_MCP_ROLLBACK_FAILED: 'MCP configuration rollback failed',
+
+  // MCP Notifications
+  NOTIFY_MCP_DEPLOYED: (count: number) =>
+    `Sudx CC: MCP config deployed (${count} servers to .vscode/mcp.json)`,
+  NOTIFY_MCP_MERGE_COMPLETE: 'Sudx CC: MCP servers merged with existing config',
+  NOTIFY_MCP_ROLLBACK_COMPLETE: 'Sudx CC: MCP config rolled back to previous version',
+  NOTIFY_MCP_SERVER_UNAVAILABLE: (name: string) =>
+    `Sudx CC: MCP server "${name}" is unreachable — check if it is running`,
+
+  // MCP Webview labels
+  WV_MCP_TRANSPORT_STDIO: 'stdio',
+  WV_MCP_TRANSPORT_SSE: 'SSE',
+  WV_MCP_STATUS_CONFIGURED: 'Configured',
+  WV_MCP_STATUS_NOT_CONFIGURED: 'Not configured',
+  WV_MCP_STATUS_ENABLED: 'Enabled',
+  WV_MCP_STATUS_DISABLED: 'Disabled',
+
+  // MCP Log strings
+  LOG_MCP_DEPLOY_START: 'Starting MCP deployment',
+  LOG_MCP_DEPLOY_COMPLETE: (count: number) => `MCP deployment complete: ${count} servers deployed`,
+  LOG_MCP_MERGE_START: 'Starting MCP config merge',
+  LOG_MCP_MERGE_COMPLETE: 'MCP config merge complete',
+
+  // MCP Lifecycle
+  MCP_LIFECYCLE_NPX_NOT_FOUND: 'npx is not available on PATH — install Node.js to use Playwright MCP',
+  MCP_LIFECYCLE_DOCKER_NOT_FOUND: 'Docker is not available — install Docker to use Crawl4ai MCP',
+  MCP_LIFECYCLE_DOCKER_NOT_RUNNING: 'Docker daemon is not running — start Docker Desktop first',
+  MCP_LIFECYCLE_SERVER_STARTED: (name: string) => `MCP server "${name}" started successfully`,
+  MCP_LIFECYCLE_SERVER_STOPPED: (name: string) => `MCP server "${name}" stopped`,
+  MCP_LIFECYCLE_SERVER_RESTARTED: (name: string) => `MCP server "${name}" restarted`,
+  MCP_LIFECYCLE_SERVER_NOT_RUNNING: (name: string) => `MCP server "${name}" is not running`,
+  MCP_LIFECYCLE_START_FAILED: (name: string) => `Failed to start MCP server "${name}"`,
+  MCP_LIFECYCLE_PICK_SERVER: 'Select an MCP server',
+
+  // MCP Health
+  MCP_HEALTH_SUMMARY: (statuses: Array<{ serverName: string; healthy: boolean }>) => {
+    const icons = statuses.map(s => `${s.healthy ? '●' : '○'} ${s.serverName}`);
+    return `MCP: ${icons.join(' | ')}`;
+  },
+
+  // MCP Token Management
+  MCP_TOKEN_LABEL_FIGMA: 'Figma API Token',
+  MCP_TOKEN_STATUS_CHECKING: 'Checking\u2026',
+  MCP_TOKEN_STATUS_SET: 'Token stored securely',
+  MCP_TOKEN_STATUS_NOT_SET: 'No token stored',
+  MCP_TOKEN_BTN_SET: '[SET TOKEN]',
+  MCP_TOKEN_BTN_CLEAR: '[CLEAR]',
+  MCP_TOKEN_PROMPT: 'Enter your Figma personal access token (starts with figd_)',
+  MCP_TOKEN_STORED: (server: string) => `${server} token stored successfully`,
+  MCP_TOKEN_CLEARED: (server: string) => `${server} token cleared`,
+  MCP_TOKEN_STORE_FAILED: (server: string, error: string) => `Failed to store ${server} token: ${error}`,
 
   // Agent
   AGENT_TOGGLE_LABEL: 'Auto-activate Sudx Copilot Customizations Agent after deployment',

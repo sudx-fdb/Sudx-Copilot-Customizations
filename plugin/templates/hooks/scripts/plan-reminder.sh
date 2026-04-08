@@ -56,6 +56,18 @@ for scan_dir in scan_dirs:
 if open_plans:
     plan_list = chr(10).join(open_plans)
     msg = 'OPEN PLANS found! Complete these FULLY before starting new tasks:\\n\\n' + plan_list
+
+    # MCP status context
+    mcp_config = os.path.join(root, '.vscode', 'mcp.json')
+    if os.path.isfile(mcp_config):
+        try:
+            with open(mcp_config, 'r', encoding='utf-8') as mf:
+                mcp_data = json.load(mf)
+            server_count = len(mcp_data.get('mcpServers', {}))
+            msg += f'\\n\\nMCP: {server_count} servers configured in .vscode/mcp.json'
+        except:
+            msg += '\\n\\nMCP: .vscode/mcp.json exists but could not be parsed'
+
     msg += '\\n\\nBEFORE WORKING: Read .github/skills/{plan-type}/SKILL.md AND .github/instructions/execute_plan.instructions.md'
     msg += '\\n\\nCRITICAL RULES FOR PLAN EXECUTION:\\n'
     msg += '\\nYOU MUST:\\n'

@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import {
   IDeploymentHistory,
   IHookConfig,
+  IMcpDeploymentState,
+  IMcpHealthStatus,
 } from '../types';
 import { SudxLogger } from '../utils/logger';
 import {
@@ -89,6 +91,61 @@ export class StateManager {
   async setCachedHookConfig(config: IHookConfig): Promise<void> {
     this.logger.debug(MODULE, 'Caching hook config', config);
     await this.workspaceSet(STATE_KEYS.CACHED_HOOK_CONFIG, config);
+  }
+
+  // ─── MCP Deployment State ─────────────────────────────────────────────────
+
+  getMcpDeploymentState(): IMcpDeploymentState {
+    this.logger.debug(MODULE, 'Reading MCP deployment state');
+    const dateRaw = this.workspaceGet<string>(STATE_KEYS.MCP_DEPLOY_DATE);
+    const servers = this.workspaceGet<string[]>(STATE_KEYS.MCP_DEPLOYED_SERVERS);
+    const backup = this.workspaceGet<string>(STATE_KEYS.MCP_CONFIG_BACKUP);
+    const conflicts = this.workspaceGet<string[]>(STATE_KEYS.MCP_MERGE_CONFLICTS);
+
+    const state: IMcpDeploymentState = {
+      lastMcpDeployDate: typeof dateRaw === 'string' ? dateRaw : null,
+      deployedServers: Array.isArray(servers) ? servers : [],
+      mcpConfigBackupPath: typeof backup === 'string' ? backup : null,
+      mergeConflicts: Array.isArray(conflicts) ? conflicts : [],
+    };
+    this.logger.debug(MODULE, 'MCP deployment state read', state);
+    return state;
+  }
+
+  async setMcpDeploymentState(state: IMcpDeploymentState): Promise<void> {
+    this.logger.debug(MODULE, 'Setting MCP deployment state', state);
+    try {
+      await this.workspaceSet(STATE_KEYS.MCP_DEPLOY_DATE, state.lastMcpDeployDate);
+      await this.workspaceSet(STATE_KEYS.MCP_DEPLOYED_SERVERS, state.deployedServers);
+      await this.workspaceSet(STATE_KEYS.MCP_CONFIG_BACKUP, state.mcpConfigBackupPath);
+      await this.workspaceSet(STATE_KEYS.MCP_MERGE_CONFLICTS, state.mergeConflicts);
+      this.logger.debug(MODULE, 'MCP deployment state saved successfully');
+    } catch (err) {
+      this.logger.error(MODULE, 'Failed to save MCP deployment state', err);
+      throw err;
+    }
+  }
+
+  // ─── MCP Health Cache ─────────────────────────────────────────────────
+
+  getMcpHealthCache(): IMcpHealthStatus[] {
+    this.logger.debug(MODULE, 'Reading MCP health cache');
+    const cached = this.workspaceGet<IMcpHealthStatus[]>(STATE_KEYS.MCP_HEALTH_CACHE);
+    return Array.isArray(cached) ? cached : [];
+  }
+
+  async setMcpHealthCache(statuses: IMcpHealthStatus[]): Promise<void> {
+    this.logger.debug(MODULE, 'Caching MCP health statuses', { count: statuses.length });
+    await this.workspaceSet(STATE_KEYS.MCP_HEALTH_CACHE, statuses);
+  }
+
+  getMcpTemplateVersion(): string {
+    return this.workspaceGet<string>(STATE_KEYS.MCP_TEMPLATE_VERSION) ?? '0.0.0';
+  }
+
+  async setMcpTemplateVersion(version: string): Promise<void> {
+    this.logger.debug(MODULE, 'Storing MCP template version', { version });
+    await this.workspaceSet(STATE_KEYS.MCP_TEMPLATE_VERSION, version);
   }
 
   // ─── Global State ─────────────────────────────────────────────────────────
