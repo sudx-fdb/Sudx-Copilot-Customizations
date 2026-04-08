@@ -276,6 +276,8 @@ export const HOOK_FILE_MAP: Record<string, { config: string; scripts: string[] }
     scripts: [
       'hooks/scripts/playwright-guard.ps1',
       'hooks/scripts/playwright-guard.sh',
+      'hooks/scripts/network-security.ps1',
+      'hooks/scripts/network-security.sh',
     ],
   },
   crawl4aiGuard: {
@@ -283,6 +285,8 @@ export const HOOK_FILE_MAP: Record<string, { config: string; scripts: string[] }
     scripts: [
       'hooks/scripts/crawl4ai-guard.ps1',
       'hooks/scripts/crawl4ai-guard.sh',
+      'hooks/scripts/network-security.ps1',
+      'hooks/scripts/network-security.sh',
     ],
   },
 };
