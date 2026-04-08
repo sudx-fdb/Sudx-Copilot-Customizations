@@ -42,6 +42,7 @@ export class FileCopier {
 
     // Ensure all directories first
     const dirs = this.computeDirectories(files, targetRoot);
+    this.logger.debug(MODULE, 'Directory structure computed', { uniqueDirs: dirs.length, totalFiles: files.length });
     for (const dir of dirs) {
       const dirUri = vscode.Uri.file(dir);
       const dirResult = await this.fileOps.createDirectory(dirUri);
@@ -180,6 +181,7 @@ export class FileCopier {
   }
 
   private computeDirectories(files: ITemplateFile[], targetRoot: string): string[] {
+    this.logger.debug(MODULE, 'Computing directories', { fileCount: files.length, targetRoot });
     const dirs = new Set<string>();
     for (const file of files) {
       const targetPath = path.join(targetRoot, file.relativePath);

@@ -97,11 +97,14 @@ export class AgentActivator {
         'OK',
         'Disable auto-activate'
       )
-      .then((action) => {
+      .then(async (action) => {
         if (action === 'Disable auto-activate') {
           this.logger.info(MODULE, 'User opted out of auto-activation');
-          this.settings.setAutoActivateAgent(false);
+          await this.settings.setAutoActivateAgent(false);
         }
+      })
+      .catch((err) => {
+        this.logger.debug(MODULE, 'Agent notification dismissed or failed', err);
       });
 
     this.logger.info(MODULE, 'Agent activation complete');

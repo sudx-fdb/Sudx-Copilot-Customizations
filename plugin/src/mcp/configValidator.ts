@@ -57,6 +57,9 @@ export class McpConfigValidator {
               });
             }
         }
+
+        // Generic deep validation for all servers
+        this.validateArgsAndEnv(name, entry, warnings);
       } catch (err) {
         this.logger.error(MODULE, `Validation error for "${name}"`, err);
         errors.push({
@@ -265,5 +268,51 @@ export class McpConfigValidator {
         resolve(!err);
       });
     });
+  }
+
+  /**
+   * Validate args array entries are strings and env values are strings or input placeholders.
+   */
+  private validateArgsAndEnv(
+    name: string,
+    entry: IMcpServerEntry,
+    warnings: IMcpValidationIssue[]
+  ): void {
+    const entryRecord = entry as Record<string, unknown>;
+    let issueCount = 0;
+
+    // Validate args
+    if (Array.isArray(entryRecord.args)) {
+      for (let i = 0; i < entryRecord.args.length; i++) {
+        if (typeof entryRecord.args[i] !== 'string') {
+          warnings.push({
+            server: name,
+            code: 'INVALID_ARG_TYPE',
+            message: `args[${i}] is ${typeof entryRecord.args[i]}, expected string`,
+            severity: 'warning',
+            suggestion: 'All args entries must be strings.',
+          });
+          issueCount++;
+        }
+      }
+    }
+
+    // Validate env values
+    if (entryRecord.env && typeof entryRecord.env === 'object' && !Array.isArray(entryRecord.env)) {
+      for (const [key, value] of Object.entries(entryRecord.env as Record<string, unknown>)) {
+        if (typeof value !== 'string') {
+          warnings.push({
+            server: name,
+            code: 'INVALID_ENV_TYPE',
+            message: `env.${key} is ${typeof value}, expected string`,
+            severity: 'warning',
+            suggestion: 'All env values must be strings or ${input:...} placeholders.',
+          });
+          issueCount++;
+        }
+      }
+    }
+
+    this.logger.debug(MODULE, `Deep validation for "${name}"`, { issues: issueCount });
   }
 }

@@ -198,11 +198,17 @@ export class TemplateScanner {
       hooks: TemplateCategory.Hooks,
       mcp: TemplateCategory.Mcp,
     };
-    return map[dirName] ?? null;
+    const resolved = map[dirName] ?? null;
+    this.logger.debug(MODULE, 'Category resolved', { dirName, category: resolved ?? 'null' });
+    return resolved;
   }
 
   private isExcluded(fileName: string): boolean {
     const lower = fileName.toLowerCase();
-    return FILE_PATTERNS_EXCLUDE.some((pattern) => lower === pattern.toLowerCase());
+    const excluded = FILE_PATTERNS_EXCLUDE.some((pattern) => lower === pattern.toLowerCase());
+    if (excluded) {
+      this.logger.debug(MODULE, 'File excluded by pattern', { fileName });
+    }
+    return excluded;
   }
 }

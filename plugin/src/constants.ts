@@ -33,6 +33,7 @@ export const CONFIG_KEYS = {
   MCP_DEPLOY_MODE: 'mcpDeployMode',
   MCP_SERVERS: 'mcpServers',
   MCP_ALLOW_LOCALHOST: 'mcpAllowLocalhost',
+  MCP_HEALTH_CHECK_INTERVAL: 'mcpHealthCheckInterval',
 } as const;
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -174,6 +175,12 @@ export const MCP_NPX_CHECK_TIMEOUT_MS = 5000;
 
 /** Retryable error codes for MCP file operations */
 export const MCP_RETRYABLE_ERRORS = ['EBUSY', 'EPERM', 'EACCES', 'EAGAIN'];
+
+/** Docker image name for Crawl4ai MCP server */
+export const MCP_CRAWL4AI_DOCKER_IMAGE = 'unclecode/crawl4ai';
+
+/** Port for Crawl4ai MCP server (Docker and SSE endpoint) */
+export const MCP_CRAWL4AI_PORT = 11235;
 
 /** Protocols blocked by MCP network security for SSRF prevention */
 export const MCP_BLOCKED_PROTOCOLS: string[] = ['file:', 'data:', 'javascript:', 'vbscript:', 'ftp:'];

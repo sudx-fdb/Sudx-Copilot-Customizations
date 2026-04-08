@@ -798,7 +798,10 @@ export class McpDeployer {
 
       const content = lines.join('\n');
       await this.fileOps.writeFile(contextPath, content);
-      this.logger.info(MODULE, 'MCP context file generated', { path: contextPath });
+      this.logger.info(MODULE, 'MCP context file generated', {
+        path: contextPath,
+        serverCount: Object.keys(servers).length,
+      });
 
       // Auto-update content.md if entry doesn't exist
       try {

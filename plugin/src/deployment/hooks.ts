@@ -148,10 +148,17 @@ export class HookManager {
 
   getAvailableHooks(): IHookDefinition[] {
     const config = this.getHookConfig();
-    return HOOK_DEFINITIONS.map((def) => ({
+    const hooks = HOOK_DEFINITIONS.map((def) => ({
       ...def,
       enabled: (config as Record<string, boolean>)[def.name] ?? true,
     }));
+    const enabledCount = hooks.filter((h) => h.enabled).length;
+    this.logger.debug(MODULE, 'Available hooks summary', {
+      total: hooks.length,
+      enabled: enabledCount,
+      disabled: hooks.length - enabledCount,
+    });
+    return hooks;
   }
 
   getEnabledHooks(): IHookDefinition[] {

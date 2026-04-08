@@ -4,6 +4,7 @@ import { IMcpHealthStatus, McpTransport } from '../types';
 import {
   VALID_MCP_SERVERS,
   MCP_HEALTH_CHECK_TIMEOUT_MS,
+  MCP_NPX_CHECK_TIMEOUT_MS,
 } from '../constants';
 
 const MODULE = 'McpHealthMonitor';
@@ -218,7 +219,7 @@ export class McpHealthMonitor implements vscode.Disposable {
     return new Promise((resolve) => {
       const { exec } = require('child_process') as typeof import('child_process');
       const checkCmd = process.platform === 'win32' ? `where ${command}` : `which ${command}`;
-      exec(checkCmd, { timeout: 5_000 }, (err: Error | null) => {
+      exec(checkCmd, { timeout: MCP_NPX_CHECK_TIMEOUT_MS }, (err: Error | null) => {
         resolve(!err);
       });
     });

@@ -281,14 +281,20 @@ export class DeploymentEngine {
             if (healthCache) {
               for (const s of healthCache) { healthMap[s.serverName] = s.healthy; }
             }
-            await this.mcpDeployer.generateMcpContextFile(
-              JSON.parse(await this.fileOps.readFile(
-                path.join(workspaceRoot, '.vscode', 'mcp.json')
-              )),
-              healthMap,
-              workspaceRoot
-            );
-            this.logger.debug(MODULE, 'MCP context file generated after deployment');
+            const mcpConfigUri = vscode.Uri.file(path.join(workspaceRoot, '.vscode', 'mcp.json'));
+            const deployedConfig = await this.mcpDeployer.readExistingMcpConfig(mcpConfigUri);
+            if (deployedConfig) {
+              await this.mcpDeployer.generateMcpContextFile(
+                deployedConfig,
+                healthMap,
+                workspaceRoot
+              );
+              this.logger.debug(MODULE, 'MCP context file generated after deployment', {
+                serverCount: deployedConfig.servers ? Object.keys(deployedConfig.servers).length : 0,
+              });
+            } else {
+              this.logger.debug(MODULE, 'MCP context file skipped — no deployed config found');
+            }
           } catch (ctxErr) {
             this.logger.warn(MODULE, 'Failed to generate MCP context file', { error: String(ctxErr) });
           }

@@ -4,6 +4,8 @@ import { IMcpServerRuntime } from '../types';
 import {
   VALID_MCP_SERVERS,
   MCP_HEALTH_CHECK_TIMEOUT_MS,
+  MCP_CRAWL4AI_DOCKER_IMAGE,
+  MCP_CRAWL4AI_PORT,
   STRINGS,
 } from '../constants';
 
@@ -20,6 +22,7 @@ export class McpLifecycleManager implements vscode.Disposable {
   private logger: SudxLogger;
   private runtimes: Map<string, IMcpServerRuntime> = new Map();
   private outputChannels: Map<string, vscode.OutputChannel> = new Map();
+  private _disposed = false;
 
   constructor(logger: SudxLogger) {
     this.logger = logger;
@@ -29,6 +32,10 @@ export class McpLifecycleManager implements vscode.Disposable {
   // ─── Start ─────────────────────────────────────────────────────────────
 
   async startServer(serverName: string): Promise<{ success: boolean; error?: string }> {
+    if (this._disposed) {
+      this.logger.warn(MODULE, 'startServer called after dispose', { serverName });
+      return { success: false, error: 'Lifecycle manager has been disposed' };
+    }
     this.logger.info(MODULE, `Starting MCP server: ${serverName}`);
 
     if (!VALID_MCP_SERVERS.includes(serverName)) {
@@ -62,6 +69,10 @@ export class McpLifecycleManager implements vscode.Disposable {
   // ─── Stop ──────────────────────────────────────────────────────────────
 
   async stopServer(serverName: string): Promise<{ success: boolean; error?: string }> {
+    if (this._disposed) {
+      this.logger.warn(MODULE, 'stopServer called after dispose', { serverName });
+      return { success: false, error: 'Lifecycle manager has been disposed' };
+    }
     this.logger.info(MODULE, `Stopping MCP server: ${serverName}`);
 
     if (!VALID_MCP_SERVERS.includes(serverName)) {
@@ -145,6 +156,7 @@ export class McpLifecycleManager implements vscode.Disposable {
 
   async dispose(): Promise<void> {
     this.logger.debug(MODULE, 'Disposing lifecycle manager — stopping all managed servers');
+    this._disposed = true;
 
     for (const [name] of this.runtimes) {
       try {
@@ -273,7 +285,7 @@ export class McpLifecycleManager implements vscode.Disposable {
     await this.execCommand('docker rm crawl4ai');
 
     const startResult = await this.execCommand(
-      'docker run -d -p 11235:11235 --name crawl4ai unclecode/crawl4ai'
+      `docker run -d -p ${MCP_CRAWL4AI_PORT}:${MCP_CRAWL4AI_PORT} --name crawl4ai ${MCP_CRAWL4AI_DOCKER_IMAGE}`
     );
 
     if (!startResult.success) {
@@ -325,7 +337,7 @@ export class McpLifecycleManager implements vscode.Disposable {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), MCP_HEALTH_CHECK_TIMEOUT_MS);
-      const response = await fetch('http://localhost:11235/mcp', {
+      const response = await fetch(`http://localhost:${MCP_CRAWL4AI_PORT}/mcp`, {
         method: 'HEAD',
         signal: controller.signal,
       });

@@ -354,8 +354,22 @@
 
   // ─── State Machine ─────────────────────────────────────────────────────
 
+  /** Valid state transitions map — only documented transitions are allowed */
+  var VALID_TRANSITIONS = {};
+  VALID_TRANSITIONS[STATE_IDLE] = [STATE_DEPLOYING];
+  VALID_TRANSITIONS[STATE_DEPLOYING] = [STATE_SUCCESS, STATE_PARTIAL, STATE_ERROR, STATE_CANCELLED];
+  VALID_TRANSITIONS[STATE_SUCCESS] = [STATE_IDLE, STATE_DEPLOYING];
+  VALID_TRANSITIONS[STATE_PARTIAL] = [STATE_IDLE, STATE_DEPLOYING];
+  VALID_TRANSITIONS[STATE_ERROR] = [STATE_IDLE, STATE_DEPLOYING];
+  VALID_TRANSITIONS[STATE_CANCELLED] = [STATE_IDLE];
+
   /** @param {string} state */
   function setState(state) {
+    var allowed = VALID_TRANSITIONS[currentState];
+    if (allowed && allowed.indexOf(state) === -1) {
+      log('setState', 'WARN: invalid transition ' + currentState + ' -> ' + state);
+      return;
+    }
     log('setState', state);
     currentState = state;
 

@@ -27,3 +27,22 @@
 | plugin/media/scripts/deploy.js | `formatFilePath()` type guard: `if (typeof fullPath !== 'string') return ''` — prevents TypeError on non-string input |
 | plugin/src/webview/provider.ts | `initTimer` property with cleanup in `dispose()` and `onDidDispose` — prevents timer firing after panel close |
 | plugin/src/utils/paths.ts | UNC path blocking in `sanitizePath()`: `/^\/\//.test(normalized) \|\| /^\\\\/.test(rawPath)` — rejects `\\server\share` and `//server/share` |
+
+## Quality Audit Fixes (Feature Plan)
+
+| File | Change |
+|------|--------|
+| plugin/src/deployment/engine.ts | Fixed broken `this.fileOps.readFile()` call — `fileOps` was not a declared property. Replaced with `this.mcpDeployer.readExistingMcpConfig()` with null check and serverCount logging |
+| plugin/src/deployment/agent.ts | Made `.then()` callback async, added `await` on `setAutoActivateAgent()`, added `.catch()` for unhandled rejection guard |
+| plugin/src/deployment/copier.ts | Added debug logging to `computeDirectories()` (fileCount, targetRoot) and summary log (uniqueDirs, totalFiles) |
+| plugin/src/deployment/scanner.ts | Added debug logging to `resolveCategory()` (dirName, category) and `isExcluded()` (fileName on exclusion) |
+| plugin/src/deployment/hooks.ts | Added summary debug log in `getAvailableHooks()` — total, enabled, disabled hook counts |
+| plugin/src/deployment/mcpDeployer.ts | Added serverCount to `generateMcpContextFile()` success log |
+| plugin/src/mcp/lifecycleManager.ts | Extracted Docker image to `MCP_CRAWL4AI_DOCKER_IMAGE` and port to `MCP_CRAWL4AI_PORT` constants. Added `_disposed` flag with guards in `startServer`/`stopServer` |
+| plugin/src/mcp/healthMonitor.ts | Replaced hardcoded `5_000` with `MCP_NPX_CHECK_TIMEOUT_MS` constant import |
+| plugin/src/mcp/configValidator.ts | Added `validateArgsAndEnv()` method: validates args entries are strings, env values are strings, logs issue count per server |
+| plugin/src/mcp/networkSecurity.ts | Fixed IPv6 false positives: added `isIpv6` guard (hostname must contain `:` or be bracketed) before checking `fc`/`fd`/`fe80` prefixes |
+| plugin/src/constants.ts | Added `MCP_CRAWL4AI_DOCKER_IMAGE`, `MCP_CRAWL4AI_PORT`, `MCP_HEALTH_CHECK_INTERVAL` to CONFIG_KEYS |
+| plugin/src/config/settings.ts | Updated `getMcpHealthCheckInterval()` to use `CONFIG_KEYS.MCP_HEALTH_CHECK_INTERVAL` instead of string literal |
+| plugin/media/scripts/main.js | Extracted magic numbers to named constants: `SECTION_FADE_MS`, `SECTION_CLEANUP_MS`, `COUNT_UP_DURATION_MS`, `HOOK_STAGGER_MS` |
+| plugin/media/scripts/deploy.js | Added `VALID_TRANSITIONS` map and transition guard in `setState()` — rejects invalid state transitions with warning log |

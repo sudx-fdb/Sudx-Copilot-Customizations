@@ -31,8 +31,9 @@ export class McpNetworkSecurity {
       return true;
     }
 
-    // IPv6 private ranges
-    if (lower.startsWith('fc') || lower.startsWith('fd') || lower.startsWith('fe80')) {
+    // IPv6 private ranges — only check when hostname looks like IPv6 (contains ':' or is bracketed)
+    const isIpv6 = lower.includes(':') || (lower.startsWith('[') && lower.endsWith(']'));
+    if (isIpv6 && (lower.startsWith('fc') || lower.startsWith('fd') || lower.startsWith('fe80') || lower.startsWith('[fc') || lower.startsWith('[fd') || lower.startsWith('[fe80'))) {
       logger?.debug(MODULE, 'isPrivateIp — IPv6 private range', { hostname });
       return true;
     }

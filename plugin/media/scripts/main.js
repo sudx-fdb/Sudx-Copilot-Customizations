@@ -21,6 +21,10 @@
   var RETRY_MAX = 3;
   var RETRY_BASE_MS = 1000;
   var ANNOUNCE_DEBOUNCE_MS = 300;
+  var SECTION_FADE_MS = 150;
+  var SECTION_CLEANUP_MS = 160;
+  var COUNT_UP_DURATION_MS = 600;
+  var HOOK_STAGGER_MS = 50;
 
   /** @type {Object|null} */
   var features = null;
@@ -190,10 +194,10 @@
         hideEl.style.opacity = '';
         hideEl.style.transition = '';
         showEl.style.opacity = '0';
-        showEl.style.transition = 'opacity 150ms ease-in';
+        showEl.style.transition = 'opacity ' + SECTION_FADE_MS + 'ms ease-in';
         requestAnimationFrame(function () { showEl.style.opacity = '1'; });
-        setTimeout(function () { showEl.style.transition = ''; showEl.style.opacity = ''; }, 160);
-      }, 150);
+        setTimeout(function () { showEl.style.transition = ''; showEl.style.opacity = ''; }, SECTION_CLEANUP_MS);
+      }, SECTION_FADE_MS);
     } else {
       if (pageMain) {
         pageMain.classList.toggle('page--active', pageId === 'main');
@@ -402,7 +406,7 @@
     if (data.fileCount !== undefined && fileCount) {
       var currentVal = parseInt(fileCount.textContent, 10) || 0;
       if (currentVal !== data.fileCount) {
-        animations.countUp(fileCount, data.fileCount, 600, ' files');
+        animations.countUp(fileCount, data.fileCount, COUNT_UP_DURATION_MS, ' files');
       }
     }
 
@@ -459,7 +463,7 @@
     if (data.filesCount !== undefined && fileCount) {
       var currentVal = parseInt(fileCount.textContent, 10) || 0;
       if (currentVal !== data.filesCount) {
-        animations.countUp(fileCount, data.filesCount, 600, ' files');
+        animations.countUp(fileCount, data.filesCount, COUNT_UP_DURATION_MS, ' files');
       }
     }
 
@@ -573,7 +577,7 @@
 
     setTimeout(function () {
       var hookItems = document.querySelectorAll('.hook-item');
-      animations.stagger(hookItems, 50, 'fadeSlideLeft');
+      animations.stagger(hookItems, HOOK_STAGGER_MS, 'fadeSlideLeft');
     }, BOOT_HOOK_DELAY_MS);
   }
 

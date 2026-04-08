@@ -187,7 +187,7 @@ export class SudxSettings {
 
   getMcpHealthCheckInterval(): number {
     this.logger.debug(MODULE, 'Getting MCP health check interval');
-    const value = this.getConfig().get<unknown>('mcpHealthCheckInterval');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.MCP_HEALTH_CHECK_INTERVAL);
     if (typeof value !== 'number' || value < 10 || value > 300) {
       if (value !== undefined) {
         this.logger.warn(MODULE, 'Invalid mcpHealthCheckInterval — using default 60', { value });
