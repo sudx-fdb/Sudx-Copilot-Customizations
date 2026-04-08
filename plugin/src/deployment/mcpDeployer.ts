@@ -49,6 +49,26 @@ export class McpDeployer {
   }
 
   /**
+   * Normalize parsed MCP config: VS Code uses "servers" key, internal model uses "mcpServers".
+   * Supports both formats for backward compatibility with older configs.
+   */
+  private normalizeMcpConfig(parsed: Record<string, unknown>): IMcpConfig {
+    if (parsed.servers && !parsed.mcpServers) {
+      parsed.mcpServers = parsed.servers;
+      delete parsed.servers;
+    }
+    return parsed as IMcpConfig;
+  }
+
+  /**
+   * Convert internal IMcpConfig to VS Code mcp.json format ("servers" instead of "mcpServers").
+   */
+  private toVscodeFormat(config: IMcpConfig): Record<string, unknown> {
+    const { mcpServers, ...rest } = config;
+    return { ...rest, servers: mcpServers ?? {} };
+  }
+
+  /**
    * Retry an async operation with exponential backoff.
    * Only retries on transient errors (EBUSY, EPERM, EACCES, EAGAIN).
    */
@@ -238,11 +258,12 @@ export class McpDeployer {
             (err as NodeJS.ErrnoException).code = 'EBUSY';
             throw err;
           }
-          const parsed = JSON.parse(readResult.data) as IMcpConfig;
+          const parsed = JSON.parse(readResult.data);
+          const config = this.normalizeMcpConfig(parsed);
           this.logger.debug(MODULE, 'Existing MCP config parsed', {
-            serverCount: Object.keys(parsed.mcpServers ?? {}).length,
+            serverCount: Object.keys(config.mcpServers ?? {}).length,
           });
-          return parsed;
+          return config;
         },
         'readExistingMcpConfig'
       );
@@ -312,7 +333,7 @@ export class McpDeployer {
     }
 
     // Merge inputs arrays without duplicates (by id)
-    const inputMap = new Map<string, Record<string, unknown>>();
+    const inputMap = new Map<string, IMcpInput>();
     for (const input of existing.inputs ?? []) {
       if (input.id) {
         inputMap.set(input.id, input);
@@ -335,7 +356,7 @@ export class McpDeployer {
       deployed: deployed.length,
       preserved: preserved.length,
       conflicts: conflicts.length,
-      inputs: merged.inputs.length,
+      inputs: (merged.inputs ?? []).length,
     });
 
     return { config: merged, deployed, preserved, conflicts };
@@ -350,7 +371,7 @@ export class McpDeployer {
 
     return this.retryMcpOperation(
       async () => {
-        const content = JSON.stringify(config, null, 2) + '\n';
+        const content = JSON.stringify(this.toVscodeFormat(config), null, 2) + '\n';
         const tempPath = targetPath + '.tmp';
         const tempUri = vscode.Uri.file(tempPath);
         const targetUri = vscode.Uri.file(targetPath);
@@ -500,11 +521,12 @@ export class McpDeployer {
     }
 
     try {
-      const parsed = JSON.parse(readResult.data) as IMcpConfig;
+      const parsed = JSON.parse(readResult.data);
+      const config = this.normalizeMcpConfig(parsed);
       this.logger.debug(MODULE, 'MCP template parsed', {
-        servers: Object.keys(parsed.mcpServers ?? {}),
+        servers: Object.keys(config.mcpServers ?? {}),
       });
-      return parsed;
+      return config;
     } catch (err) {
       this.logger.error(MODULE, 'Failed to parse MCP template config', err);
       return null;
@@ -739,7 +761,7 @@ export class McpDeployer {
       const contentMdPath = path.join(workspaceRoot, '.ai_workfolder', 'content.md');
 
       // Ensure directory exists
-      await this.fileOps.ensureDirectory(contextDir);
+      await this.fileOps.createDirectory(vscode.Uri.file(contextDir));
 
       const lines: string[] = [];
       lines.push('# MCP Server Status');
@@ -797,7 +819,7 @@ export class McpDeployer {
       lines.push('');
 
       const content = lines.join('\n');
-      await this.fileOps.writeFile(contextPath, content);
+      await this.fileOps.writeFile(vscode.Uri.file(contextPath), content);
       this.logger.info(MODULE, 'MCP context file generated', {
         path: contextPath,
         serverCount: Object.keys(servers).length,
@@ -805,13 +827,14 @@ export class McpDeployer {
 
       // Auto-update content.md if entry doesn't exist
       try {
-        const contentMdExists = await this.fileOps.fileExists(contentMdPath);
+        const contentMdUri = vscode.Uri.file(contentMdPath);
+        const contentMdExists = await this.fileOps.fileExists(contentMdUri);
         if (contentMdExists) {
-          const contentMd = await this.fileOps.readFile(contentMdPath);
-          if (!contentMd.includes('mcp-status.md')) {
+          const contentMdResult = await this.fileOps.readFile(contentMdUri);
+          if (contentMdResult.success && contentMdResult.data && !contentMdResult.data.includes('mcp-status.md')) {
             const entry = '| context_files/mcp-status.md | Auto-generated MCP server status and tool reference |';
-            const updatedContent = contentMd.trimEnd() + '\n' + entry + '\n';
-            await this.fileOps.writeFile(contentMdPath, updatedContent);
+            const updatedContent = contentMdResult.data.trimEnd() + '\n' + entry + '\n';
+            await this.fileOps.writeFile(contentMdUri, updatedContent);
             this.logger.debug(MODULE, 'content.md updated with mcp-status.md entry');
           }
         }

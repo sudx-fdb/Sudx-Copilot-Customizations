@@ -2,7 +2,7 @@
   "name": "sudx-copilot-customizations",
   "displayName": "Sudx Copilot Customizations",
   "description": "Deploy and manage Copilot AI agent customization files for your workspace",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publisher": "sudx",
   "engines": {
     "vscode": "^1.85.0"

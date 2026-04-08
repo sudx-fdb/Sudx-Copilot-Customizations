@@ -4,7 +4,7 @@
     "deployDate": null,
     "managedServers": ["playwright", "figma", "crawl4ai"]
   },
-  "mcpServers": {
+  "servers": {
     "playwright": {
       "command": "npx",
       "args": [

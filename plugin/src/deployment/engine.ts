@@ -274,6 +274,7 @@ export class DeploymentEngine {
         }
 
         // Generate MCP context file for session-context hook
+        const workspaceRoot = this.paths.getWorkspaceRoot();
         if (mcpResult.success && workspaceRoot) {
           try {
             const healthCache = this.stateManager.getMcpHealthCache();

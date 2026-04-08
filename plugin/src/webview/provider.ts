@@ -755,8 +755,9 @@ export class SudxWebviewProvider {
       const parsed = JSON.parse(content);
       const servers: IMcpServerStatus[] = [];
 
-      if (parsed && typeof parsed === 'object' && parsed.mcpServers) {
-        for (const [name, entry] of Object.entries(parsed.mcpServers)) {
+      if (parsed && typeof parsed === 'object' && (parsed.servers || parsed.mcpServers)) {
+        const serverMap = parsed.servers ?? parsed.mcpServers;
+        for (const [name, entry] of Object.entries(serverMap)) {
           if (!entry || typeof entry !== 'object') { continue; }
           const serverEntry = entry as Record<string, unknown>;
           const isSSE = typeof serverEntry.url === 'string';

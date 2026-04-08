@@ -113,7 +113,7 @@ MCP servers are configured in `.vscode/mcp.json` at the workspace root:
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "playwright": {
       "command": "npx",
       "args": ["@playwright/mcp@latest"]
