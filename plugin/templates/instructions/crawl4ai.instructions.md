@@ -11,7 +11,7 @@ These rules apply when using the Crawl4ai MCP server for web crawling and struct
 
 ## Prerequisites
 
-Crawl4ai is an SSE-based server — it must be running before any tool calls. Unlike Playwright/Figma (stdio/npx), it does NOT auto-start.
+Crawl4ai is an SSE-based server — it must be running before any tool calls. Unlike Playwright (stdio/npx), it does NOT auto-start.
 
 **Setup (choose one):**
 1. **Docker (recommended):** `docker run -p 11235:11235 unclecode/crawl4ai`
@@ -61,7 +61,7 @@ Crawl4ai is an SSE-based server — it must be running before any tool calls. Un
 **Do NOT use when:**
 - For single static page content → use `fetch_webpage` (faster, built-in)
 - For interactive browser automation (click, type, fill) → use Playwright MCP
-- For Figma design data → use Figma MCP
+- For design file extraction → not supported (no design MCP server configured)
 - For pages requiring JavaScript interaction before content loads → use Playwright MCP
 
 ---

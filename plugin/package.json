@@ -2,7 +2,7 @@
   "name": "sudx-copilot-customizations",
   "displayName": "Sudx Copilot Customizations",
   "description": "Deploy and manage Copilot AI agent customization files for your workspace",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publisher": "sudx",
   "engines": {
     "vscode": "^1.85.0"
@@ -80,7 +80,6 @@
               "planReminder": true,
               "workflowSelector": true,
               "protectWorkflow": true,
-              "figmaGuard": true,
               "playwrightGuard": true,
               "crawl4aiGuard": true
             },
@@ -116,11 +115,6 @@
                 "type": "boolean",
                 "default": true,
                 "markdownDescription": "Enforce single-checkmark-per-edit rule for plan files"
-              },
-              "figmaGuard": {
-                "type": "boolean",
-                "default": true,
-                "markdownDescription": "Enforce Figma API best practices (depth-first fetching, safe operations)"
               },
               "playwrightGuard": {
                 "type": "boolean",
@@ -181,7 +175,6 @@
             "type": "object",
             "default": {
               "playwright": true,
-              "figma": true,
               "crawl4ai": true
             },
             "markdownDescription": "Enable or disable individual MCP servers for deployment. Disabled servers are excluded from `.vscode/mcp.json`.",
@@ -190,11 +183,6 @@
                 "type": "boolean",
                 "default": true,
                 "markdownDescription": "Deploy **Playwright** MCP server (browser automation via accessibility tree)"
-              },
-              "figma": {
-                "type": "boolean",
-                "default": true,
-                "markdownDescription": "Deploy **Figma** MCP server (design data extraction)"
               },
               "crawl4ai": {
                 "type": "boolean",

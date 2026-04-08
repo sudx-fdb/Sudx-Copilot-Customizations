@@ -16,7 +16,6 @@ const MODULE = 'McpLifecycleManager';
  * Each server type has its own start/stop strategy:
  *   - Playwright: npx @playwright/mcp@latest (stdio)
  *   - Crawl4ai: Docker container (SSE)
- *   - Figma: stateless (token validation only, no persistent process)
  */
 export class McpLifecycleManager implements vscode.Disposable {
   private logger: SudxLogger;
@@ -55,8 +54,6 @@ export class McpLifecycleManager implements vscode.Disposable {
           return await this.startPlaywright();
         case 'crawl4ai':
           return await this.startCrawl4ai();
-        case 'figma':
-          return this.startFigma();
         default:
           return { success: false, error: `No start handler for: ${serverName}` };
       }
@@ -86,8 +83,6 @@ export class McpLifecycleManager implements vscode.Disposable {
           return await this.stopPlaywright();
         case 'crawl4ai':
           return await this.stopCrawl4ai();
-        case 'figma':
-          return this.stopFigma();
         default:
           return { success: false, error: `No stop handler for: ${serverName}` };
       }
@@ -121,8 +116,6 @@ export class McpLifecycleManager implements vscode.Disposable {
           return await this.checkPlaywrightStatus();
         case 'crawl4ai':
           return await this.checkCrawl4aiStatus();
-        case 'figma':
-          return this.checkFigmaStatus();
         default:
           return defaultRuntime;
       }
@@ -371,50 +364,6 @@ export class McpLifecycleManager implements vscode.Disposable {
     };
     this.runtimes.set('crawl4ai', stopped);
     return stopped;
-  }
-
-  // ─── Figma ─────────────────────────────────────────────────────────────
-
-  private startFigma(): { success: boolean; error?: string } {
-    this.logger.debug(MODULE, 'Figma is stateless — validating token presence only');
-
-    // Figma MCP uses stdio via npx and is invoked per-call — no persistent process
-    const runtime: IMcpServerRuntime = {
-      serverName: 'figma',
-      pid: null,
-      startTime: new Date().toISOString(),
-      status: 'running',
-      outputChannelName: null,
-    };
-    this.runtimes.set('figma', runtime);
-
-    this.logger.info(MODULE, 'Figma MCP marked as available (stateless, token-based)');
-    return { success: true };
-  }
-
-  private stopFigma(): { success: boolean; error?: string } {
-    this.logger.debug(MODULE, 'Figma stop is a no-op (stateless server)');
-
-    const runtime = this.runtimes.get('figma');
-    if (runtime) {
-      this.runtimes.set('figma', { ...runtime, status: 'stopped' });
-    }
-
-    return { success: true };
-  }
-
-  private checkFigmaStatus(): IMcpServerRuntime {
-    this.logger.debug(MODULE, 'Checking Figma status (token-based, stateless)');
-
-    // Figma is always "available" if the token env var is set — check runtime map
-    const runtime = this.runtimes.get('figma');
-    return runtime ?? {
-      serverName: 'figma',
-      pid: null,
-      startTime: null,
-      status: 'stopped',
-      outputChannelName: null,
-    };
   }
 
   // ─── Utility ───────────────────────────────────────────────────────────

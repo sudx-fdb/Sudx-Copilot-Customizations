@@ -42,7 +42,6 @@ export interface IHookConfig {
   planReminder: boolean;
   workflowSelector: boolean;
   protectWorkflow: boolean;
-  figmaGuard: boolean;
   playwrightGuard: boolean;
   crawl4aiGuard: boolean;
   [key: string]: boolean;
@@ -277,7 +276,6 @@ export interface IMcpServerStatus {
 
 export interface IMcpServerConfig {
   playwright: boolean;
-  figma: boolean;
   crawl4ai: boolean;
   [key: string]: boolean;
 }

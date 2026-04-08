@@ -405,47 +405,11 @@ export class McpDeployer {
   }
 
   /**
-   * Inject stored tokens into the MCP config, replacing ${input:...} prompts
-   * with environment variable injections. Currently handles Figma token.
+   * Token injection placeholder — currently no servers require stored tokens.
+   * Preserved for future extensibility.
    */
-  private async injectStoredTokens(config: IMcpConfig): Promise<void> {
-    if (!this.tokenManager) {
-      this.logger.debug(MODULE, 'No token manager — skipping token injection');
-      return;
-    }
-
-    const figmaEntry = config.mcpServers?.['figma'];
-    if (!figmaEntry) {
-      this.logger.debug(MODULE, 'No figma server in config — skipping token injection');
-      return;
-    }
-
-    try {
-      const hasToken = await this.tokenManager.hasToken('figma');
-      if (!hasToken) {
-        this.logger.debug(MODULE, 'No stored Figma token — keeping original config');
-        return;
-      }
-
-      const token = await this.tokenManager.getToken('figma');
-      if (!token) {
-        this.logger.debug(MODULE, 'Figma token retrieval returned null');
-        return;
-      }
-
-      // Replace ${input:figmaApiToken} with direct env value
-      if (figmaEntry.env && typeof figmaEntry.env === 'object') {
-        for (const [key, value] of Object.entries(figmaEntry.env)) {
-          if (typeof value === 'string' && value.includes('${input:figmaApiToken}')) {
-            (figmaEntry.env as Record<string, string>)[key] = token;
-            this.logger.info(MODULE, `Injected stored Figma token into env.${key} (replaced input prompt)`);
-          }
-        }
-      }
-    } catch (err) {
-      this.logger.error(MODULE, 'Failed to inject stored Figma token', err);
-      // Non-fatal — continue with original config
-    }
+  private async injectStoredTokens(_config: IMcpConfig): Promise<void> {
+    this.logger.debug(MODULE, 'No token injection needed — no servers require stored tokens');
   }
 
   /**
@@ -794,9 +758,6 @@ export class McpDeployer {
       lines.push('### Playwright (browser automation)');
       lines.push('`browser_navigate`, `browser_click`, `browser_type`, `browser_snapshot`, `browser_take_screenshot`, `browser_tab_list`, `browser_tab_new`, `browser_tab_close`, `browser_console_messages`, `browser_select_option`, `browser_hover`, `browser_drag`, `browser_press_key`, `browser_handle_dialog`, `browser_file_upload`, `browser_wait`, `browser_resize`, `browser_pdf_save`, `browser_install`');
       lines.push('');
-      lines.push('### Figma (design data)');
-      lines.push('`figma_get_file`, `figma_get_node`, `figma_get_images`, `figma_get_comments`, `figma_get_styles`, `figma_get_components`');
-      lines.push('');
       lines.push('### Crawl4ai (web crawling)');
       lines.push('`crawl4ai_crawl`, `crawl4ai_extract`, `crawl4ai_markdown`, `crawl4ai_status`');
       lines.push('');
@@ -805,7 +766,6 @@ export class McpDeployer {
       lines.push('## Server Details');
       lines.push('');
       lines.push('- **Playwright**: Auto-started by plugin via `npx @playwright/mcp@latest` (stdio)');
-      lines.push('- **Figma**: Auto-started by plugin via `npx @anthropic/mcp-figma` (stdio). Requires API token (set in Sudx CC panel)');
       lines.push('- **Crawl4ai**: Auto-started by plugin via Docker at `http://localhost:11235/sse` (SSE). Requires Docker running');
       lines.push('');
 
@@ -813,7 +773,6 @@ export class McpDeployer {
       lines.push('## Detailed Instructions');
       lines.push('');
       lines.push('- Playwright: `.github/instructions/playwright.instructions.md`');
-      lines.push('- Figma: `.github/instructions/figma.instructions.md`');
       lines.push('- Crawl4ai: `.github/instructions/crawl4ai.instructions.md`');
       lines.push('- MCP Tools: `.github/instructions/mcp-tools.instructions.md`');
       lines.push('');

@@ -1,11 +1,11 @@
 ---
-description: "Use when working with MCP tools, browser automation, web scraping, Figma design extraction, or Playwright. Use when: MCP, browser, web scraping, crawling, automation, Playwright, Figma, crawl4ai."
+description: "Use when working with MCP tools, browser automation, web scraping, or Playwright. Use when: MCP, browser, web scraping, crawling, automation, Playwright, crawl4ai."
 applyTo: "**"
 ---
 
 # MCP Tools — Usage Instructions
 
-These rules apply when using Model Context Protocol (MCP) tools for browser automation, web crawling, and design integration.
+These rules apply when using Model Context Protocol (MCP) tools for browser automation and web crawling.
 
 ---
 
@@ -41,17 +41,12 @@ Browser automation via accessibility tree — no vision models needed.
 - For reading documentation → use `fetch_webpage` instead
 - When the content doesn't require JavaScript rendering
 
-### Figma MCP (`@thirdstrandstudio/mcp-figma`)
-Full Figma API access for design data extraction.
-
-→ See [figma.instructions.md](figma.instructions.md) for detailed usage rules.
-
 ### Crawl4ai
 LLM-friendly web crawler for RAG, deep crawling, and structured data extraction.
 
 → See [crawl4ai.instructions.md](crawl4ai.instructions.md) for detailed usage rules.
 
-> **IMPORTANT:** Crawl4ai requires a running server — it is NOT auto-started like Playwright/Figma.
+> **IMPORTANT:** Crawl4ai requires a running server — it is NOT auto-started like Playwright.
 > Start it before use with one of the methods below.
 
 **Server Setup (choose one):**
@@ -76,7 +71,6 @@ LLM-friendly web crawler for RAG, deep crawling, and structured data extraction.
 **When NOT to use:**
 - For single page content → use `fetch_webpage`
 - For interactive browser automation → use Playwright MCP
-- For Figma design data → use Figma MCP
 
 **Prerequisite Check:** Before calling crawl4ai tools, verify the server is running. If unreachable, tell the user: "Start crawl4ai server first: `docker run -p 11235:11235 unclecode/crawl4ai`"
 
@@ -85,10 +79,7 @@ LLM-friendly web crawler for RAG, deep crawling, and structured data extraction.
 ## Decision Tree
 
 ```
-User needs web/browser/design interaction
-    │
-    ├─ Figma design file?
-    │   └─ Yes → Figma MCP tools
+User needs web/browser interaction
     │
     ├─ Interactive browser automation (click, type, navigate)?
     │   └─ Yes → Playwright MCP tools
@@ -118,10 +109,6 @@ MCP servers are configured in `.vscode/mcp.json` at the workspace root:
       "command": "npx",
       "args": ["@playwright/mcp@latest"]
     },
-    "figma": {
-      "command": "npx",
-      "args": ["@thirdstrandstudio/mcp-figma", "--figma-token", "YOUR_TOKEN"]
-    },
     "crawl4ai": {
       "url": "http://localhost:11235/mcp"
     }
@@ -129,6 +116,6 @@ MCP servers are configured in `.vscode/mcp.json` at the workspace root:
 }
 ```
 
-> **Note:** Playwright and Figma use stdio transport (auto-started by VS Code). Crawl4ai uses SSE transport (requires a running server).
+> **Note:** Playwright uses stdio transport (auto-started by VS Code). Crawl4ai uses SSE transport (requires a running server).
 
 Verify MCP server availability before calling tools. If a server is not configured, suggest the user set it up.

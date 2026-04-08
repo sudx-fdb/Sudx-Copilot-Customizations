@@ -39,9 +39,6 @@ export class McpConfigValidator {
           case 'playwright':
             await this.validatePlaywrightConfig(name, entry, warnings, errors);
             break;
-          case 'figma':
-            this.validateFigmaConfig(name, entry, warnings, errors);
-            break;
           case 'crawl4ai':
             await this.validateCrawl4aiConfig(name, entry, warnings, errors);
             break;
@@ -115,43 +112,6 @@ export class McpConfigValidator {
         message: 'npx is not available on PATH',
         severity: 'error',
         suggestion: 'Install Node.js (v18+) to get npx, required for Playwright MCP.',
-      });
-    }
-  }
-
-  /**
-   * Validate Figma config: check token placeholder and format.
-   */
-  private validateFigmaConfig(
-    name: string,
-    entry: IMcpServerEntry,
-    warnings: IMcpValidationIssue[],
-    _errors: IMcpValidationIssue[]
-  ): void {
-    this.logger.debug(MODULE, 'Validating Figma config');
-
-    const entryRecord = entry as Record<string, unknown>;
-    const env = entryRecord.env as Record<string, unknown> | undefined;
-
-    if (!env || !env.FIGMA_PERSONAL_ACCESS_TOKEN) {
-      warnings.push({
-        server: name,
-        code: 'FIGMA_NO_TOKEN_ENV',
-        message: 'No FIGMA_PERSONAL_ACCESS_TOKEN in env block',
-        severity: 'warning',
-        suggestion: 'Add env.FIGMA_PERSONAL_ACCESS_TOKEN to the figma server config or use input placeholder.',
-      });
-      return;
-    }
-
-    const tokenVal = String(env.FIGMA_PERSONAL_ACCESS_TOKEN);
-    if (!tokenVal.startsWith('${input:') && !tokenVal.startsWith('figd_') && !tokenVal.startsWith('fig_')) {
-      warnings.push({
-        server: name,
-        code: 'FIGMA_TOKEN_FORMAT',
-        message: 'Figma token does not match expected format (figd_* or fig_*) and is not an input placeholder',
-        severity: 'warning',
-        suggestion: 'Ensure the token is a valid Figma Personal Access Token or use ${input:figmaApiToken} placeholder.',
       });
     }
   }

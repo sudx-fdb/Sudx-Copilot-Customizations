@@ -2,14 +2,13 @@
 
 ## Overview
 
-The extension integrates three MCP (Model Context Protocol) servers that provide AI agents with browser automation, web crawling, and design extraction capabilities. MCP servers are configured via `.vscode/mcp.json` in your workspace.
+The extension integrates two MCP (Model Context Protocol) servers that provide AI agents with browser automation and web crawling capabilities. MCP servers are configured via `.vscode/mcp.json` in your workspace.
 
 ### Supported MCP Servers
 
 | Server | Purpose | Transport |
-|--------|---------|-----------|
+|--------|---------|----------|
 | **Playwright** | Browser automation — navigate, click, type, screenshot, PDF export | Stdio (npx) |
-| **Figma** | Design data extraction — components, styles, images from Figma files | Stdio (npx) |
 | **Crawl4ai** | Web crawling — extract content, structured data, markdown from websites | SSE (HTTP) |
 
 ---
@@ -29,7 +28,6 @@ Alternatively, configure in VS Code settings:
 ```json
 "sudx-ai.mcpServers": {
   "playwright": true,
-  "figma": true,
   "crawl4ai": true
 }
 ```
@@ -86,12 +84,6 @@ Guard hooks run automatically before AI agent tool calls to prevent misuse:
 - Blocks crawling of private/internal IP addresses (security: SSRF prevention)
 - Warns when crawl depth exceeds 3 levels
 - Rate limit awareness to prevent server overload
-
-### Figma Guard
-- Warns when batch-exporting more than 10 images
-- Guards against deep traversal (depth > 2 levels)
-- Prevents team-level queries that return excessive data
-- Rate limiting awareness for API calls
 
 Guard hooks are enabled/disabled alongside other hooks in the webview or settings.
 

@@ -20,12 +20,6 @@
   var serverToggles = null;
   /** @type {NodeListOf<Element>|null} */
   var healthDots = null;
-  /** @type {HTMLElement|null} */
-  var setTokenBtn = null;
-  /** @type {HTMLElement|null} */
-  var clearTokenBtn = null;
-  /** @type {HTMLElement|null} */
-  var tokenStatusEl = null;
 
   // ─── State ─────────────────────────────────────────────────────────────
 
@@ -47,7 +41,6 @@
       bindEvents();
       registerMessageHandlers();
       requestMcpData();
-      requestTokenStatus();
 
       log('init', 'done');
     } catch (err) {
@@ -59,12 +52,8 @@
     log('cacheElements', 'start');
     serverToggles = document.querySelectorAll('[data-mcp-server-toggle]');
     healthDots = document.querySelectorAll('.mcp-status-dot');
-    setTokenBtn = document.getElementById('mcp-set-figma-token');
-    clearTokenBtn = document.getElementById('mcp-clear-figma-token');
-    tokenStatusEl = document.getElementById('mcp-figma-token-status');
     log('cacheElements', 'toggles=' + (serverToggles ? serverToggles.length : 0) +
-      ' dots=' + (healthDots ? healthDots.length : 0) +
-      ' tokenBtn=' + !!setTokenBtn);
+      ' dots=' + (healthDots ? healthDots.length : 0));
   }
 
   function bindEvents() {
@@ -83,14 +72,6 @@
       }
     }
 
-    // Token management buttons
-    if (setTokenBtn) {
-      setTokenBtn.addEventListener('click', handleSetToken);
-    }
-    if (clearTokenBtn) {
-      clearTokenBtn.addEventListener('click', handleClearToken);
-    }
-
     log('bindEvents', 'done');
   }
 
@@ -102,15 +83,6 @@
       messaging.send('getMcpServers');
     } catch (err) {
       log('requestMcpData', 'ERROR: ' + (err && err.message ? err.message : err));
-    }
-  }
-
-  function requestTokenStatus() {
-    log('requestTokenStatus', 'sending getMcpTokenStatus for figma');
-    try {
-      messaging.send('getMcpTokenStatus', { serverName: 'figma' });
-    } catch (err) {
-      log('requestTokenStatus', 'ERROR: ' + (err && err.message ? err.message : err));
     }
   }
 
@@ -142,12 +114,6 @@
           renderServerHealth(status.serverName, !!status.healthy);
         }
       }
-    });
-
-    messaging.onMessage('mcpTokenStatus', function (payload) {
-      log('onMcpTokenStatus', JSON.stringify(payload));
-      if (!payload || typeof payload !== 'object') { return; }
-      updateTokenStatusDisplay(!!payload.hasToken);
     });
 
     log('registerMessageHandlers', 'done');
@@ -216,56 +182,6 @@
     var items = document.querySelectorAll('[data-mcp-server="' + serverName + '"] .hook-item__desc');
     for (var i = 0; i < items.length; i++) {
       items[i].textContent = transport;
-    }
-  }
-
-  // ─── Token Management ──────────────────────────────────────────────────
-
-  /** @param {Event} _event */
-  function handleSetToken(_event) {
-    log('handleSetToken', 'prompting for token');
-
-    // Use native prompt for secure input (webview limitation — no password inputs via VS Code API)
-    var token = prompt('Enter your Figma personal access token (starts with figd_):');
-    if (!token || token.trim().length === 0) {
-      log('handleSetToken', 'cancelled or empty');
-      return;
-    }
-
-    try {
-      messaging.send('setMcpToken', { serverName: 'figma', token: token.trim() });
-      log('handleSetToken', 'sent setMcpToken');
-    } catch (err) {
-      log('handleSetToken', 'ERROR: ' + (err && err.message ? err.message : err));
-    }
-  }
-
-  /** @param {Event} _event */
-  function handleClearToken(_event) {
-    log('handleClearToken', 'clearing figma token');
-    try {
-      messaging.send('clearMcpToken', { serverName: 'figma' });
-      log('handleClearToken', 'sent clearMcpToken');
-    } catch (err) {
-      log('handleClearToken', 'ERROR: ' + (err && err.message ? err.message : err));
-    }
-  }
-
-  /**
-   * @param {boolean} hasToken
-   */
-  function updateTokenStatusDisplay(hasToken) {
-    log('updateTokenStatusDisplay', 'hasToken=' + hasToken);
-    if (!tokenStatusEl) { return; }
-
-    if (hasToken) {
-      tokenStatusEl.textContent = 'Token stored securely';
-      tokenStatusEl.classList.add('mcp-token--set');
-      tokenStatusEl.classList.remove('mcp-token--not-set');
-    } else {
-      tokenStatusEl.textContent = 'No token stored';
-      tokenStatusEl.classList.remove('mcp-token--set');
-      tokenStatusEl.classList.add('mcp-token--not-set');
     }
   }
 

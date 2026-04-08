@@ -1,8 +1,8 @@
 {
   "_sudxMeta": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "deployDate": null,
-    "managedServers": ["playwright", "figma", "crawl4ai"]
+    "managedServers": ["playwright", "crawl4ai"]
   },
   "servers": {
     "playwright": {
@@ -11,25 +11,11 @@
         "@playwright/mcp@latest"
       ]
     },
-    "figma": {
-      "command": "npx",
-      "args": [
-        "@thirdstrandstudio/mcp-figma",
-        "--figma-token",
-        "${input:figmaApiToken}"
-      ]
-    },
     "crawl4ai": {
       "url": "${input:crawl4aiEndpoint}"
     }
   },
   "inputs": [
-    {
-      "id": "figmaApiToken",
-      "type": "promptString",
-      "description": "Figma Personal Access Token (from https://www.figma.com/developers/api#access-tokens)",
-      "password": true
-    },
     {
       "id": "crawl4aiEndpoint",
       "type": "promptString",

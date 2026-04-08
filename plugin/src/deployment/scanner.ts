@@ -132,7 +132,7 @@ export class TemplateScanner {
   /**
    * Returns MCP template files, optionally filtered by per-server enable/disable config.
    * MCP files are matched against server names by checking if the filename starts with a known server name
-   * (e.g., `playwright.json`, `figma-config.json`, `crawl4ai-setup.json`).
+   * (e.g., `playwright.json`, `crawl4ai-setup.json`).
    * Files that don't match any known server name are always included.
    */
   async scanMcpFiles(

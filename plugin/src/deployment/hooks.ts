@@ -54,13 +54,6 @@ const HOOK_DEFINITIONS: Omit<IHookDefinition, 'enabled'>[] = [
     scriptFiles: HOOK_FILE_MAP.protectWorkflow.scripts,
   },
   {
-    name: 'figmaGuard',
-    displayName: STRINGS.HOOK_FIGMA_GUARD,
-    description: STRINGS.HOOK_FIGMA_GUARD_DESC,
-    configFile: HOOK_FILE_MAP.figmaGuard.config,
-    scriptFiles: HOOK_FILE_MAP.figmaGuard.scripts,
-  },
-  {
     name: 'playwrightGuard',
     displayName: STRINGS.HOOK_PLAYWRIGHT_GUARD,
     description: STRINGS.HOOK_PLAYWRIGHT_GUARD_DESC,

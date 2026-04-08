@@ -86,7 +86,6 @@ export class McpHealthMonitor implements vscode.Disposable {
     try {
       const results = await Promise.allSettled([
         this.checkPlaywright(),
-        this.checkFigma(),
         this.checkCrawl4ai(),
       ]);
 
@@ -140,37 +139,6 @@ export class McpHealthMonitor implements vscode.Disposable {
     } catch (err) {
       this.logger.warn(MODULE, 'Playwright health check error', err);
       return { serverName: 'playwright', healthy: false, lastCheck: now, error: err instanceof Error ? err.message : String(err), transport: McpTransport.Stdio };
-    }
-  }
-
-  /**
-   * Check Figma availability by verifying token format (no API call).
-   * Figma tokens start with figd_ or fig_ and are at least 20 chars.
-   */
-  private async checkFigma(): Promise<IMcpHealthStatus> {
-    this.logger.debug(MODULE, 'Checking Figma health');
-    const now = new Date().toISOString();
-
-    try {
-      // Check if FIGMA_PERSONAL_ACCESS_TOKEN env var exists and has valid format
-      const token = process.env.FIGMA_PERSONAL_ACCESS_TOKEN;
-      if (token && token.length >= 20 && (token.startsWith('figd_') || token.startsWith('fig_'))) {
-        this.logger.debug(MODULE, 'Figma health: token format valid');
-        return { serverName: 'figma', healthy: true, lastCheck: now, transport: McpTransport.Stdio };
-      }
-
-      // Also check npx availability as secondary check
-      const npxAvailable = await this.checkCommandAvailable('npx');
-      if (npxAvailable) {
-        this.logger.debug(MODULE, 'Figma health: npx available, token not verified');
-        return { serverName: 'figma', healthy: true, lastCheck: now, transport: McpTransport.Stdio };
-      }
-
-      this.logger.debug(MODULE, 'Figma health: neither token nor npx available');
-      return { serverName: 'figma', healthy: false, lastCheck: now, error: 'npx not found and no valid FIGMA_PERSONAL_ACCESS_TOKEN', transport: McpTransport.Stdio };
-    } catch (err) {
-      this.logger.warn(MODULE, 'Figma health check error', err);
-      return { serverName: 'figma', healthy: false, lastCheck: now, error: err instanceof Error ? err.message : String(err), transport: McpTransport.Stdio };
     }
   }
 

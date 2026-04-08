@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-The MCP (Model Context Protocol) integration enables the extension to deploy, configure, and manage MCP server definitions in the workspace `.vscode/mcp.json`. Three MCP servers are supported: **Playwright** (browser automation, stdio), **Figma** (design extraction, stdio), and **Crawl4ai** (web crawling, SSE).
+The MCP (Model Context Protocol) integration enables the extension to deploy, configure, and manage MCP server definitions in the workspace `.vscode/mcp.json`. Two MCP servers are supported: **Playwright** (browser automation, stdio) and **Crawl4ai** (web crawling, SSE).
 
 ### Module Map
 
@@ -79,7 +79,7 @@ Constructor: `(logger: SudxLogger, fileOps: FileOperations, paths: PathUtils)`
 | `IMcpConfig` | `mcpServers`, `inputs`, `_sudxMeta` | Root structure of `.vscode/mcp.json` |
 | `IMcpServerEntry` | `command`, `args`, `env`, `url`, `_sudxManaged` | Single MCP server definition (stdio or SSE) |
 | `IMcpServerStatus` | `name`, `transport`, `configured`, `enabled`, `command`, `url` | Runtime server status for webview display |
-| `IMcpServerConfig` | `playwright`, `figma`, `crawl4ai` | Per-server enable/disable booleans (user setting) |
+| `IMcpServerConfig` | `playwright`, `crawl4ai` | Per-server enable/disable booleans (user setting) |
 | `IMcpDeploymentState` | `lastMcpDeployDate`, `deployedServers`, `mcpConfigBackupPath`, `mergeConflicts` | Persisted workspace state for MCP |
 | `IMcpSudxMeta` | `version`, `deployDate`, `managedServers` | Metadata block in mcp.json for Sudx tracking |
 
@@ -92,13 +92,11 @@ Constructor: `(logger: SudxLogger, fileOps: FileOperations, paths: PathUtils)`
 | `MCP_CONFIG_FILENAME` | `'mcp.json'` | Target config file name |
 | `MCP_DEPLOY_TARGET` | `'.vscode'` | Target directory for MCP config |
 | `SUDX_MCP_MARKER_KEY` | `'_sudxManaged'` | Property key to mark Sudx-managed servers |
-| `DEFAULT_MCP_SERVERS` | `{ playwright: true, figma: true, crawl4ai: true }` | Default enabled state for all servers |
-| `VALID_MCP_SERVERS` | `['playwright', 'figma', 'crawl4ai']` | Allowlist for server name validation |
+| `DEFAULT_MCP_SERVERS` | `{ playwright: true, crawl4ai: true }` | Default enabled state for all servers |
+| `VALID_MCP_SERVERS` | `['playwright', 'crawl4ai']` | Allowlist for server name validation |
 | `DEFAULT_MCP_DEPLOY_MODE` | `'merge'` | Default deploy mode |
 | `MCP_HEALTH_CHECK_TIMEOUT_MS` | `3000` | SSE health check timeout |
 | `MAX_CRAWL_DEPTH_WARNING` | `3` | Crawl4ai guard depth threshold |
-| `MAX_FIGMA_DEPTH_WARNING` | `2` | Figma guard depth threshold |
-| `MAX_FIGMA_BATCH_IMAGES` | `10` | Figma guard batch export threshold |
 | `PLAYWRIGHT_SNAPSHOT_REQUIRED_TOOLS` | `['browser_click', 'browser_type', 'browser_drag']` | Tools that require prior snapshot |
 
 ---
@@ -114,14 +112,6 @@ Constructor: `(logger: SudxLogger, fileOps: FileOperations, paths: PathUtils)`
 ### Crawl4ai Guard (`crawl4ai-guard.json` / `.ps1` / `.sh`)
 
 - **Event**: `PreToolUse` — runs before Crawl4ai MCP tools
-- **Logic**: SSRF prevention — blocks URLs targeting private IP ranges (`10.x`, `172.16-31.x`, `192.168.x`, `127.x`, `169.254.x`). Warns on excessive depth. Rate limit awareness
-- **Output**: `REJECT` for private IPs, `WARN` for depth > threshold, or `ALLOW`
-
-### Figma Guard (`figma-guard.json` / `.ps1` / `.sh`)
-
-- **Event**: `PreToolUse` — runs before Figma MCP tools
-- **Logic**: Rate limiting awareness, batch image export guard (>10 images triggers warning), depth guard (>2 levels), team-level query guard
-- **Output**: `WARN` or `ALLOW`
 
 ---
 
@@ -190,7 +180,7 @@ DeploymentEngine.deploy()
 The session context hook reads `.vscode/mcp.json` at session start and injects:
 - List of configured MCP servers with transport types
 - Crawl4ai SSE reachability check (HTTP HEAD)
-- npx availability check for Playwright/Figma
+- npx availability check for Playwright
 
 ---
 

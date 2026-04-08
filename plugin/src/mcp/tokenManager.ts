@@ -7,19 +7,10 @@ const MODULE = 'McpTokenManager';
 /** Secret storage key prefix for MCP tokens */
 const SECRET_KEY_PREFIX = 'sudxAi.mcpToken.';
 
-/** Minimum token length for Figma personal access tokens */
-const FIGMA_TOKEN_MIN_LENGTH = 40;
-
-/** Required prefix for Figma personal access tokens */
-const FIGMA_TOKEN_PREFIX = 'figd_';
-
-/** Allowed characters in Figma personal access tokens (after prefix) */
-const FIGMA_TOKEN_PATTERN = /^figd_[a-zA-Z0-9_-]+$/;
-
 /**
  * Manages secure storage of MCP server tokens using VS Code's SecretStorage API.
  * Tokens are encrypted at rest and never appear in plain-text configuration files.
- * Currently supports Figma personal access tokens; extensible for other servers.
+ * Extensible for any server that requires token-based authentication.
  */
 export class McpTokenManager implements vscode.Disposable {
   private logger: SudxLogger;
@@ -144,19 +135,7 @@ export class McpTokenManager implements vscode.Disposable {
   private validateTokenFormat(serverName: string, token: string): string | null {
     this.logger.debug(MODULE, 'validateTokenFormat', { serverName, tokenLength: token.length });
 
-    if (serverName === 'figma') {
-      if (!token.startsWith(FIGMA_TOKEN_PREFIX)) {
-        return `Figma token must start with "${FIGMA_TOKEN_PREFIX}" prefix`;
-      }
-      if (token.length < FIGMA_TOKEN_MIN_LENGTH) {
-        return `Figma token must be at least ${FIGMA_TOKEN_MIN_LENGTH} characters long (got ${token.length})`;
-      }
-      if (!FIGMA_TOKEN_PATTERN.test(token)) {
-        return 'Figma token may only contain alphanumeric characters, hyphens, and underscores';
-      }
-    }
-
-    // Other servers: no specific format validation (yet)
+    // No server-specific format validation currently required
     return null;
   }
 

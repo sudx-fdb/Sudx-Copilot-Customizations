@@ -214,6 +214,30 @@ export function activate(context: vscode.ExtensionContext): void {
     logger.debug(MODULE, 'Commands registered');
 
     logger.info(MODULE, 'All services initialized successfully');
+
+    // ── 8. Auto-Deploy ───────────────────────────────────────────────────
+    // Runs deployment automatically on activation so templates, hooks,
+    // agent config and MCP servers are always up-to-date without manual trigger.
+    logger.debug(MODULE, 'Starting auto-deploy...');
+    const autoDeployConfig = {
+      hookConfig: settings.getHookConfig(),
+      autoActivateAgent: settings.getAutoActivateAgent(),
+      deployPath: settings.getDeployPath(),
+    };
+    engine.deploy(autoDeployConfig, context).then((result) => {
+      if (result.success) {
+        logger.info(MODULE, 'Auto-deploy completed successfully', {
+          filesDeployed: result.filesDeployed,
+          mcpServersDeployed: result.mcpResult?.serversDeployed ?? 0,
+        });
+      } else {
+        logger.warn(MODULE, 'Auto-deploy completed with errors', {
+          errors: result.errors,
+        });
+      }
+    }).catch((err) => {
+      logger.error(MODULE, 'Auto-deploy failed unexpectedly', err);
+    });
   } catch (err) {
     logger.error(MODULE, 'Failed to activate extension', err);
     vscode.window.showErrorMessage('Sudx Copilot Customizations failed to activate. Check the log.');

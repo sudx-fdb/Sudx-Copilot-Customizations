@@ -292,7 +292,6 @@ export class SudxWebviewProvider {
 
     const servers = [
       { name: 'Playwright', key: 'playwright', transport: 'stdio' },
-      { name: 'Figma', key: 'figma', transport: 'stdio' },
       { name: 'Crawl4ai', key: 'crawl4ai', transport: 'SSE' },
     ];
 
@@ -315,18 +314,6 @@ export class SudxWebviewProvider {
         <h2 class="section-title" id="mcp-section-title">\u250C\u2500\u2500 ${this.escapeHtml(STRINGS.WV_SECTION_MCP)}</h2>
         <p class="section-description">${this.escapeHtml(STRINGS.WV_SECTION_MCP_DESC)}</p>
         <div class="card">${serverItems}
-        </div>
-        <div class="card mcp-token-card">
-          <div class="hook-item">
-            <div class="hook-item__info">
-              <span class="hook-item__name">${this.escapeHtml(STRINGS.MCP_TOKEN_LABEL_FIGMA)}</span>
-              <span class="hook-item__desc mcp-token-status" id="mcp-figma-token-status">${this.escapeHtml(STRINGS.MCP_TOKEN_STATUS_CHECKING)}</span>
-            </div>
-            <div class="hook-item__controls">
-              <button class="btn btn--sm" id="mcp-set-figma-token" title="${this.escapeHtml(STRINGS.MCP_TOKEN_PROMPT)}">${this.escapeHtml(STRINGS.MCP_TOKEN_BTN_SET)}</button>
-              <button class="btn btn--sm btn--danger" id="mcp-clear-figma-token" title="Remove stored Figma token">${this.escapeHtml(STRINGS.MCP_TOKEN_BTN_CLEAR)}</button>
-            </div>
-          </div>
         </div>
       </section>`;
   }

@@ -45,7 +45,6 @@ export const DEFAULT_HOOKS: IHookConfig = {
   planReminder: true,
   workflowSelector: true,
   protectWorkflow: true,
-  figmaGuard: true,
   playwrightGuard: true,
   crawl4aiGuard: true,
 };
@@ -54,7 +53,6 @@ export const VALID_HOOKS: string[] = Object.keys(DEFAULT_HOOKS);
 
 export const DEFAULT_MCP_SERVERS: IMcpServerConfig = {
   playwright: true,
-  figma: true,
   crawl4ai: true,
 };
 
@@ -202,12 +200,6 @@ export const MCP_PRIVATE_IP_RANGES: Array<{ prefix: string; description: string 
 /** Crawl depth threshold that triggers guard warning */
 export const MAX_CRAWL_DEPTH_WARNING = 3;
 
-/** Figma depth threshold that triggers guard warning */
-export const MAX_FIGMA_DEPTH_WARNING = 2;
-
-/** Figma batch image export threshold that triggers guard warning */
-export const MAX_FIGMA_BATCH_IMAGES = 10;
-
 /** Playwright tools that should be preceded by a snapshot */
 export const PLAYWRIGHT_SNAPSHOT_REQUIRED_TOOLS = [
   'browser_click',
@@ -277,13 +269,6 @@ export const HOOK_FILE_MAP: Record<string, { config: string; scripts: string[] }
       'hooks/scripts/protect-workflow-pre.sh',
       'hooks/scripts/protect-workflow-post.ps1',
       'hooks/scripts/protect-workflow-post.sh',
-    ],
-  },
-  figmaGuard: {
-    config: 'hooks/figma-guard.json',
-    scripts: [
-      'hooks/scripts/figma-guard.ps1',
-      'hooks/scripts/figma-guard.sh',
     ],
   },
   playwrightGuard: {
@@ -373,8 +358,6 @@ export const STRINGS = {
   HOOK_WORKFLOW_SELECTOR_DESC: 'Inject workflow selection reminder on every prompt',
   HOOK_PROTECT_WORKFLOW: 'Workflow Protection',
   HOOK_PROTECT_WORKFLOW_DESC: 'Enforce single-checkmark-per-edit rule for plan files',
-  HOOK_FIGMA_GUARD: 'Figma Guard',
-  HOOK_FIGMA_GUARD_DESC: 'Enforce Figma API best practices (depth-first fetching, safe operations)',
   HOOK_PLAYWRIGHT_GUARD: 'Playwright Guard',
   HOOK_PLAYWRIGHT_GUARD_DESC: 'Enforce Playwright best practices (HTTPS navigation, snapshot-before-click, vision cap)',
   HOOK_CRAWL4AI_GUARD: 'Crawl4ai Guard',
@@ -440,13 +423,11 @@ export const STRINGS = {
   },
 
   // MCP Token Management
-  MCP_TOKEN_LABEL_FIGMA: 'Figma API Token',
   MCP_TOKEN_STATUS_CHECKING: 'Checking\u2026',
   MCP_TOKEN_STATUS_SET: 'Token stored securely',
   MCP_TOKEN_STATUS_NOT_SET: 'No token stored',
   MCP_TOKEN_BTN_SET: '[SET TOKEN]',
   MCP_TOKEN_BTN_CLEAR: '[CLEAR]',
-  MCP_TOKEN_PROMPT: 'Enter your Figma personal access token (starts with figd_)',
   MCP_TOKEN_STORED: (server: string) => `${server} token stored successfully`,
   MCP_TOKEN_CLEARED: (server: string) => `${server} token cleared`,
   MCP_TOKEN_STORE_FAILED: (server: string, error: string) => `Failed to store ${server} token: ${error}`,

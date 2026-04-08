@@ -59,7 +59,7 @@ These rules apply when using the Playwright MCP server (`@playwright/mcp`) for b
 **Do NOT use when:**
 - For simple static page content → use `fetch_webpage` (faster, no browser overhead)
 - For reading documentation pages → use `fetch_webpage`
-- For design file extraction → use Figma MCP
+- For design file extraction → not supported (no design MCP server configured)
 - For deep multi-page crawling → use Crawl4ai
 
 ---
