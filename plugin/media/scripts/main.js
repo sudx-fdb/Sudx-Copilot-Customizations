@@ -361,15 +361,15 @@
     if (skeletonTimer) { clearTimeout(skeletonTimer); skeletonTimer = null; }
 
     // Apply boot-config from extension (dynamic timings)
-    if (data.uiConfig) {
-      if (typeof data.uiConfig.bootStaggerMs === 'number') { BOOT_STAGGER_MS = data.uiConfig.bootStaggerMs; }
-      if (typeof data.uiConfig.bootHookDelayMs === 'number') { BOOT_HOOK_DELAY_MS = data.uiConfig.bootHookDelayMs; }
-      log('handleConfigData', 'uiConfig applied');
+    if (data.uiSettings) {
+      if (typeof data.uiSettings.bootStaggerMs === 'number') { BOOT_STAGGER_MS = data.uiSettings.bootStaggerMs; }
+      if (typeof data.uiSettings.bootHookDelayMs === 'number') { BOOT_HOOK_DELAY_MS = data.uiSettings.bootHookDelayMs; }
+      log('handleConfigData', 'uiSettings applied');
     }
 
     // Apply feature flags
-    if (data.features) {
-      features = data.features;
+    if (data.featureFlags) {
+      features = data.featureFlags;
       applyFeatureFlags(features);
     }
 

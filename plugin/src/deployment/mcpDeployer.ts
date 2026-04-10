@@ -255,7 +255,11 @@ export class McpDeployer {
           const readResult = await this.fileOps.readFile(targetUri);
           if (!readResult.success || !readResult.data) {
             const err = new Error(readResult.error ?? 'Read failed');
-            (err as NodeJS.ErrnoException).code = 'EBUSY';
+            // Only mark as transient if the underlying error suggests file lock/access issue
+            const underlyingCode = (readResult as unknown as Record<string, unknown>).code;
+            if (typeof underlyingCode === 'string' && MCP_RETRYABLE_ERRORS.includes(underlyingCode)) {
+              (err as NodeJS.ErrnoException).code = underlyingCode;
+            }
             throw err;
           }
           const parsed = JSON.parse(readResult.data);
@@ -380,9 +384,12 @@ export class McpDeployer {
         const writeResult = await this.fileOps.writeFile(tempUri, content);
         if (!writeResult.success) {
           this.logger.error(MODULE, 'Failed to write temp MCP config', { error: writeResult.error });
-          // Throw to trigger retry if error is retryable
+          // Throw to trigger retry — preserve original error code if retryable
           const err = new Error(writeResult.error ?? 'Write failed');
-          (err as NodeJS.ErrnoException).code = 'EBUSY';
+          const underlyingCode = (writeResult as unknown as Record<string, unknown>).code;
+          if (typeof underlyingCode === 'string' && MCP_RETRYABLE_ERRORS.includes(underlyingCode)) {
+            (err as NodeJS.ErrnoException).code = underlyingCode;
+          }
           throw err;
         }
 
@@ -637,8 +644,14 @@ export class McpDeployer {
     const mergedServers: Record<string, IMcpServerEntry> = {};
 
     // Identify managed server names from template _sudxMeta
-    const meta = (newTemplate as Record<string, unknown>)['_sudxMeta'] as { managedServers?: string[] } | undefined;
+    const meta = (newTemplate as Record<string, unknown>)['_sudxMeta'] as { managedServers?: string[]; vpsServers?: string[] } | undefined;
     const managedNames = new Set(meta?.managedServers ?? Object.keys(newServers));
+    const vpsNames = new Set(meta?.vpsServers ?? []);
+
+    // VPS servers are URL-only (no local install needed) — they connect via the backend proxy
+    if (vpsNames.size > 0) {
+      this.logger.debug(MODULE, `VPS-managed servers (remote, no local install): ${[...vpsNames].join(', ')}`);
+    }
 
     // Process all old servers
     for (const [name, entry] of Object.entries(oldServers)) {
@@ -743,7 +756,8 @@ export class McpDeployer {
       for (const [name, entry] of Object.entries(servers)) {
         if (!entry || typeof entry !== 'object') { continue; }
         const serverEntry = entry as IMcpServerEntry;
-        const transport = serverEntry.type === 'stdio' ? 'stdio' : 'SSE';
+        const isStdio = !!(serverEntry as Record<string, unknown>).command;
+        const transport = isStdio ? 'stdio' : 'SSE';
         const isSudx = (serverEntry as Record<string, unknown>)[SUDX_MCP_MARKER_KEY] === true;
         const status = isSudx ? 'Sudx-managed' : 'User-defined';
         const healthy = healthCache?.[name];

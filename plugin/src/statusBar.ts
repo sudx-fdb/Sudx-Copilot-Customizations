@@ -10,6 +10,7 @@ import {
   CONFIG_KEYS,
   UI_CONSTANTS,
   STRINGS,
+  VALID_MCP_SERVERS,
 } from './constants';
 
 const MODULE = 'StatusBar';
@@ -23,6 +24,8 @@ export class StatusBarManager {
   private _fileCount = 0;
   private _lastDeploy = '';
   private _mcpHealthStatuses: IMcpHealthStatus[] = [];
+  private _backendConnected = false;
+  private _disposed = false;
 
   constructor(logger: SudxLogger) {
     this.logger = logger;
@@ -62,6 +65,7 @@ export class StatusBarManager {
   }
 
   setState(state: IStatusBarState['state']): void {
+    if (this._disposed) { return; }
     this.logger.debug(MODULE, `State transition: ${this.currentState.state} → ${state}`);
     this.currentState.state = state;
     this.applyState();
@@ -99,9 +103,24 @@ export class StatusBarManager {
   }
 
   updateMcpHealth(statuses: IMcpHealthStatus[]): void {
-    this._mcpHealthStatuses = statuses;
-    this.applyState(); // Refresh tooltip with MCP health
-    this.logger.debug(MODULE, 'MCP health updated in status bar', { count: statuses.length });
+    if (this._disposed) { return; }
+    const validStatuses = statuses.filter(s => VALID_MCP_SERVERS.includes(s.serverName));
+    if (validStatuses.length !== statuses.length) {
+      this.logger.debug(MODULE, 'Filtered stale MCP servers from health display', {
+        received: statuses.length,
+        displayed: validStatuses.length,
+      });
+    }
+    this._mcpHealthStatuses = validStatuses;
+    this.applyState();
+    this.logger.debug(MODULE, 'MCP health updated in status bar', { count: validStatuses.length });
+  }
+
+  updateBackendStatus(connected: boolean): void {
+    if (this._disposed) { return; }
+    this._backendConnected = connected;
+    this.applyState();
+    this.logger.debug(MODULE, `Backend status updated: ${connected ? 'connected' : 'disconnected'}`);
   }
 
   getDisposable(): vscode.Disposable {
@@ -109,6 +128,8 @@ export class StatusBarManager {
   }
 
   dispose(): void {
+    if (this._disposed) { return; }
+    this._disposed = true;
     this.logger.debug(MODULE, 'Disposing status bar');
     if (this.resetTimer) {
       clearTimeout(this.resetTimer);
@@ -119,11 +140,17 @@ export class StatusBarManager {
   }
 
   private applyState(): void {
-    this.statusBarItem.text = STATUS_BAR_TEXT[this.currentState.state];
+    const baseText = STATUS_BAR_TEXT[this.currentState.state];
+    this.statusBarItem.text = this._backendConnected
+      ? `${baseText} $(plug)`
+      : baseText;
 
     // Tooltip with details
     const baseTooltip = STATUS_BAR_TOOLTIP[this.currentState.state];
     const parts: string[] = [baseTooltip];
+    parts.push(this._backendConnected
+      ? '$(plug) Backend Connected'
+      : '$(debug-disconnect) Backend Disconnected');
     if (this._fileCount > 0 && this._lastDeploy) {
       parts.push(`${this._fileCount} files, last: ${this._lastDeploy}`);
     }

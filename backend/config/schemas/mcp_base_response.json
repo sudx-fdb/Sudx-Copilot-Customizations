@@ -1,0 +1,91 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MCP JSON-RPC Response Schema",
+  "description": "Base schema for validating MCP JSON-RPC tool call responses. Per-MCP schemas extend this with tool-specific result structures.",
+  "type": "object",
+  "required": ["jsonrpc", "id"],
+  "properties": {
+    "jsonrpc": {
+      "type": "string",
+      "const": "2.0"
+    },
+    "id": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "integer" }
+      ]
+    }
+  },
+  "oneOf": [
+    {
+      "required": ["result"],
+      "properties": {
+        "result": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": ["type", "text"],
+                    "properties": {
+                      "type": { "const": "text" },
+                      "text": { "type": "string" }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": ["type", "data", "mimeType"],
+                    "properties": {
+                      "type": { "const": "image" },
+                      "data": { "type": "string", "description": "Base64 encoded image data" },
+                      "mimeType": { "type": "string" }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": ["type", "resource"],
+                    "properties": {
+                      "type": { "const": "resource" },
+                      "resource": {
+                        "type": "object",
+                        "required": ["uri"],
+                        "properties": {
+                          "uri": { "type": "string" },
+                          "text": { "type": "string" },
+                          "blob": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "isError": {
+              "type": "boolean",
+              "description": "MCP tool-level error flag (NOT a JSON-RPC error)"
+            }
+          }
+        }
+      },
+      "not": { "required": ["error"] }
+    },
+    {
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "object",
+          "required": ["code", "message"],
+          "properties": {
+            "code": { "type": "integer" },
+            "message": { "type": "string" },
+            "data": {}
+          }
+        }
+      },
+      "not": { "required": ["result"] }
+    }
+  ]
+}

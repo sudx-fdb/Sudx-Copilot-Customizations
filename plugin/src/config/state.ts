@@ -10,6 +10,7 @@ import {
   STATE_KEYS,
   CURRENT_STATE_VERSION,
   MAX_HISTORY_ENTRIES,
+  VALID_MCP_SERVERS,
 } from '../constants';
 
 const MODULE = 'State';
@@ -131,12 +132,28 @@ export class StateManager {
   getMcpHealthCache(): IMcpHealthStatus[] {
     this.logger.debug(MODULE, 'Reading MCP health cache');
     const cached = this.workspaceGet<IMcpHealthStatus[]>(STATE_KEYS.MCP_HEALTH_CACHE);
-    return Array.isArray(cached) ? cached : [];
+    if (!Array.isArray(cached)) {
+      return [];
+    }
+    const valid = cached.filter(s => VALID_MCP_SERVERS.includes(s.serverName));
+    if (valid.length < cached.length) {
+      const stale = cached.filter(s => !VALID_MCP_SERVERS.includes(s.serverName));
+      this.logger.warn(MODULE, `Filtered ${stale.length} stale health cache entries`, {
+        removed: stale.map(s => s.serverName),
+      });
+    }
+    return valid;
   }
 
   async setMcpHealthCache(statuses: IMcpHealthStatus[]): Promise<void> {
-    this.logger.debug(MODULE, 'Caching MCP health statuses', { count: statuses.length });
-    await this.workspaceSet(STATE_KEYS.MCP_HEALTH_CACHE, statuses);
+    const validated = statuses.filter(s => VALID_MCP_SERVERS.includes(s.serverName));
+    if (validated.length < statuses.length) {
+      this.logger.warn(MODULE, `Rejected ${statuses.length - validated.length} invalid health entries on write`, {
+        rejected: statuses.filter(s => !VALID_MCP_SERVERS.includes(s.serverName)).map(s => s.serverName),
+      });
+    }
+    this.logger.debug(MODULE, 'Caching MCP health statuses', { count: validated.length });
+    await this.workspaceSet(STATE_KEYS.MCP_HEALTH_CACHE, validated);
   }
 
   getMcpTemplateVersion(): string {
@@ -259,7 +276,17 @@ export class StateManager {
     if (currentVersion < CURRENT_STATE_VERSION) {
       this.logger.info(MODULE, `State migration from v${currentVersion} to v${CURRENT_STATE_VERSION}`);
       this.logger.debug(MODULE, 'Pre-migration state dump', this.dumpState());
-      // Fire-and-forget is acceptable here - worst case is migration runs again on next startup
+
+      // Clear stale health cache entries from previous versions (e.g., removed servers like figma)
+      const cached = this.workspaceGet<IMcpHealthStatus[]>(STATE_KEYS.MCP_HEALTH_CACHE);
+      if (Array.isArray(cached)) {
+        const valid = cached.filter(s => VALID_MCP_SERVERS.includes(s.serverName));
+        if (valid.length < cached.length) {
+          this.logger.info(MODULE, `Migration: cleared ${cached.length - valid.length} stale health cache entries`);
+          void this.workspaceSet(STATE_KEYS.MCP_HEALTH_CACHE, valid);
+        }
+      }
+
       void this.workspaceSet(STATE_KEYS.STATE_VERSION, CURRENT_STATE_VERSION);
       this.logger.info(MODULE, 'State migration complete');
     }

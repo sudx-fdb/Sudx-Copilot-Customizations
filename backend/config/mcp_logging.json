@@ -1,0 +1,106 @@
+{
+  "version": 1,
+  "description": "Per-MCP logging configuration — controls verbosity, redaction, output preview, and token tracking",
+  "defaults": {
+    "log_level": "INFO",
+    "log_input_params": true,
+    "log_output_preview": true,
+    "output_preview_max_bytes": 4096,
+    "track_tokens": true,
+    "sensitive_fields_redact": [
+      "password",
+      "secret",
+      "token",
+      "api_key",
+      "apikey",
+      "auth_key",
+      "access_key",
+      "secret_key",
+      "private_key",
+      "ssh_key",
+      "credential"
+    ]
+  },
+  "per_mcp": {
+    "pentest-ai": {
+      "log_level": "DEBUG",
+      "output_preview_max_bytes": 8192,
+      "notes": "Large tool catalog, verbose debug output helpful for initial integration"
+    },
+    "autopentest-ai": {
+      "log_level": "INFO",
+      "output_preview_max_bytes": 8192
+    },
+    "PentestThinkingMCP": {
+      "log_level": "INFO",
+      "output_preview_max_bytes": 4096
+    },
+    "pentest-mcp-server": {
+      "log_level": "INFO",
+      "output_preview_max_bytes": 4096,
+      "sensitive_fields_redact": ["password", "ssh_key", "credential", "session_token"]
+    },
+    "GhidraMCP": {
+      "log_level": "INFO",
+      "output_preview_max_bytes": 8192,
+      "notes": "Decompiled code output can be very large"
+    },
+    "shodan-mcp": {
+      "log_level": "INFO",
+      "sensitive_fields_redact": ["api_key", "apikey"],
+      "notes": "Small payloads, but API key must be redacted"
+    },
+    "burp-suite-mcp": {
+      "log_level": "INFO",
+      "output_preview_max_bytes": 8192,
+      "notes": "SSE transport — logging at proxy level"
+    },
+    "nessus-mcp-server": {
+      "log_level": "INFO",
+      "sensitive_fields_redact": ["access_key", "secret_key"],
+      "output_preview_max_bytes": 8192
+    },
+    "Wazuh-MCP-Server": {
+      "log_level": "DEBUG",
+      "log_input_params": true,
+      "notes": "Enhanced logging for destructive tools — block_ip, isolate_host, kill_process"
+    },
+    "defense-mcp-server": {
+      "log_level": "DEBUG",
+      "log_input_params": true,
+      "notes": "Enhanced logging for destructive tools — firewall rules, hardening actions"
+    },
+    "threat-hunting-mcp-server": {
+      "log_level": "INFO",
+      "output_preview_max_bytes": 8192,
+      "notes": "Splunk query results can be very large"
+    },
+    "Volatility-MCP-Server": {
+      "log_level": "INFO",
+      "output_preview_max_bytes": 2048,
+      "notes": "Memory dump output can be multi-MB — reduced preview size to protect memory"
+    },
+    "CABTA": {
+      "log_level": "INFO",
+      "output_preview_max_bytes": 4096
+    },
+    "MISP-MCP-SERVER": {
+      "log_level": "INFO",
+      "sensitive_fields_redact": ["auth_key"],
+      "output_preview_max_bytes": 4096
+    }
+  },
+  "destructive_tools": {
+    "description": "Tools marked as destructive get DESTRUCTIVE_ACTION events with enhanced metadata",
+    "tools": {
+      "Wazuh-MCP-Server": ["block_ip", "isolate_host", "kill_process"],
+      "defense-mcp-server": ["firewall_iptables", "firewall_nftables", "apply_hardening"],
+      "pentest-mcp-server": ["execute_command"]
+    }
+  },
+  "protocol_auto_detection": {
+    "enabled": true,
+    "sample_messages": 10,
+    "description": "If a new/unknown MCP starts, ProcessProxy attempts to detect JSON-RPC format from first N messages"
+  }
+}

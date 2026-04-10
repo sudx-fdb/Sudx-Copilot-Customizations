@@ -1,0 +1,46 @@
+{
+  "rules": [
+    {
+      "name": "high_error_rate",
+      "condition": "error_rate > 0.25",
+      "window": "5m",
+      "severity": "CRITICAL",
+      "mcp": "*",
+      "cooldown": "5m",
+      "description": "Error rate exceeds 25% over 5-minute window"
+    },
+    {
+      "name": "latency_spike",
+      "condition": "p95_latency > 30000",
+      "window": "5m",
+      "severity": "WARN",
+      "mcp": "*",
+      "cooldown": "5m",
+      "description": "P95 latency exceeds 30 seconds"
+    },
+    {
+      "name": "server_down",
+      "condition": "consecutive_health_failures >= 3",
+      "severity": "CRITICAL",
+      "mcp": "*",
+      "cooldown": "10m",
+      "description": "3+ consecutive health check failures"
+    },
+    {
+      "name": "token_budget",
+      "condition": "daily_tokens > 1000000",
+      "severity": "WARN",
+      "mcp": "*",
+      "cooldown": "60m",
+      "description": "Daily token consumption exceeds 1M"
+    },
+    {
+      "name": "destructive_action",
+      "condition": "event_type == DESTRUCTIVE_ACTION",
+      "severity": "CRITICAL",
+      "mcp": "Wazuh-MCP-Server,defense-mcp-server",
+      "cooldown": "0",
+      "description": "Destructive action detected on defense/monitoring MCPs"
+    }
+  ]
+}

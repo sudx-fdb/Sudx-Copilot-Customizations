@@ -1,8 +1,9 @@
 {
   "_sudxMeta": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "deployDate": null,
-    "managedServers": ["playwright", "crawl4ai"]
+    "managedServers": ["playwright", "crawl4ai"],
+    "vpsServers": ["pentest-ai", "autopentest-ai", "pentest-mcp-server", "defense-mcp-server", "crawl4ai-vps"]
   },
   "servers": {
     "playwright": {
@@ -13,6 +14,21 @@
     },
     "crawl4ai": {
       "url": "${input:crawl4aiEndpoint}"
+    },
+    "pentest-ai": {
+      "url": "${input:vpsBackendUrl}/mcp/pentest-ai"
+    },
+    "autopentest-ai": {
+      "url": "${input:vpsBackendUrl}/mcp/autopentest-ai"
+    },
+    "pentest-mcp-server": {
+      "url": "${input:vpsBackendUrl}/mcp/pentest-mcp-server"
+    },
+    "defense-mcp-server": {
+      "url": "${input:vpsBackendUrl}/mcp/defense-mcp-server"
+    },
+    "crawl4ai-vps": {
+      "url": "${input:vpsBackendUrl}/mcp/crawl4ai"
     }
   },
   "inputs": [
@@ -21,6 +37,18 @@
       "type": "promptString",
       "description": "Crawl4ai MCP SSE endpoint URL. Requires a running server: docker run -p 11235:11235 unclecode/crawl4ai",
       "default": "http://localhost:11235/mcp"
+    },
+    {
+      "id": "vpsBackendUrl",
+      "type": "promptString",
+      "description": "VPS Backend MCP Manager URL",
+      "default": "https://rtnc.sudx.de:8420"
+    },
+    {
+      "id": "vpsBackendToken",
+      "type": "promptString",
+      "description": "VPS Backend authentication token (Bearer token)",
+      "password": true
     }
   ]
 }

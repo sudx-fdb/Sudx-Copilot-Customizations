@@ -1,3 +1,4 @@
+import { exec } from 'child_process';
 import { SudxLogger } from '../utils/logger';
 import {
   IMcpConfig,
@@ -222,7 +223,6 @@ export class McpConfigValidator {
   private checkCommandAvailable(command: string): Promise<boolean> {
     this.logger.debug(MODULE, `Checking command: ${command}`);
     return new Promise((resolve) => {
-      const { exec } = require('child_process') as typeof import('child_process');
       const checkCmd = process.platform === 'win32' ? `where ${command}` : `which ${command}`;
       exec(checkCmd, { timeout: 5_000 }, (err: Error | null) => {
         resolve(!err);

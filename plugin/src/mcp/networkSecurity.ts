@@ -1,5 +1,5 @@
 import { SudxLogger } from '../utils/logger';
-import { MCP_BLOCKED_PROTOCOLS, MCP_PRIVATE_IP_RANGES } from '../constants';
+import { MCP_BLOCKED_PROTOCOLS } from '../constants';
 
 const MODULE = 'McpNetworkSecurity';
 

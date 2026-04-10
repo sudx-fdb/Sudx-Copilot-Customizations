@@ -1,3 +1,4 @@
+import { exec } from 'child_process';
 import * as vscode from 'vscode';
 import { SudxLogger } from '../utils/logger';
 import { IMcpHealthStatus, McpTransport } from '../types';
@@ -5,6 +6,7 @@ import {
   VALID_MCP_SERVERS,
   MCP_HEALTH_CHECK_TIMEOUT_MS,
   MCP_NPX_CHECK_TIMEOUT_MS,
+  MCP_CRAWL4AI_PORT,
 } from '../constants';
 
 const MODULE = 'McpHealthMonitor';
@@ -152,7 +154,7 @@ export class McpHealthMonitor implements vscode.Disposable {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), MCP_HEALTH_CHECK_TIMEOUT_MS);
-      const response = await fetch('http://localhost:11235/mcp', {
+      const response = await fetch(`http://localhost:${MCP_CRAWL4AI_PORT}/mcp`, {
         method: 'HEAD',
         signal: controller.signal,
       });
@@ -185,7 +187,6 @@ export class McpHealthMonitor implements vscode.Disposable {
   private checkCommandAvailable(command: string): Promise<boolean> {
     this.logger.debug(MODULE, `Checking command availability: ${command}`);
     return new Promise((resolve) => {
-      const { exec } = require('child_process') as typeof import('child_process');
       const checkCmd = process.platform === 'win32' ? `where ${command}` : `which ${command}`;
       exec(checkCmd, { timeout: MCP_NPX_CHECK_TIMEOUT_MS }, (err: Error | null) => {
         resolve(!err);

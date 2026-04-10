@@ -561,50 +561,6 @@ export class SudxWebviewProvider {
       });
     });
 
-    this.messageHandler.registerHandler('setMcpToken', async (payload, requestId) => {
-      this.logger.debug(MODULE, 'setMcpToken request received');
-      const data = payload as { serverName: string; token: string };
-      if (!this.tokenManager) {
-        await this.messageHandler.sendToWebview({ type: 'mcpTokenStatus', payload: { serverName: data.serverName, hasToken: false, error: 'Token manager not available' }, requestId, success: false });
-        return;
-      }
-      const result = await this.tokenManager.storeToken(data.serverName, data.token);
-      await this.messageHandler.sendToWebview({
-        type: 'mcpTokenStatus',
-        payload: { serverName: data.serverName, hasToken: result.success, error: result.error },
-        requestId,
-        success: result.success,
-      });
-    });
-
-    this.messageHandler.registerHandler('clearMcpToken', async (payload, requestId) => {
-      this.logger.debug(MODULE, 'clearMcpToken request received');
-      const data = payload as { serverName: string };
-      if (!this.tokenManager) {
-        await this.messageHandler.sendToWebview({ type: 'mcpTokenStatus', payload: { serverName: data.serverName, hasToken: false }, requestId, success: true });
-        return;
-      }
-      const result = await this.tokenManager.deleteToken(data.serverName);
-      await this.messageHandler.sendToWebview({
-        type: 'mcpTokenStatus',
-        payload: { serverName: data.serverName, hasToken: false, error: result.error },
-        requestId,
-        success: result.success,
-      });
-    });
-
-    this.messageHandler.registerHandler('getMcpTokenStatus', async (payload, requestId) => {
-      this.logger.debug(MODULE, 'getMcpTokenStatus request received');
-      const data = payload as { serverName: string };
-      const hasToken = this.tokenManager ? await this.tokenManager.hasToken(data.serverName) : false;
-      await this.messageHandler.sendToWebview({
-        type: 'mcpTokenStatus',
-        payload: { serverName: data.serverName, hasToken },
-        requestId,
-        success: true,
-      });
-    });
-
     // Push UI settings to webview when settings change
     this.settings.onSettingsChanged(({ key }) => {
       if (key.startsWith('ui.') && this.panel) {

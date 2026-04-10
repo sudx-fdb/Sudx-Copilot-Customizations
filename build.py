@@ -1163,6 +1163,7 @@ def parse_args() -> argparse.Namespace:
               python build.py --list --last 5
               python build.py --info
               python build.py -f -b TestRun  -k "FIX: Test" -Normal --dry-run
+              python build.py -f -b TestRun  -k "FIX: Test" -Normal --deploy ssh
 
             Comment Prefixes (required):
               FIX:   Repair / adjustment of existing function
@@ -1269,6 +1270,16 @@ def parse_args() -> argparse.Namespace:
         help="Stable Release",
     )
 
+    # -- Deploy (optional, after build) ------------------------------------
+    deploy_group = parser.add_argument_group("Deployment (optional, after build)")
+    deploy_group.add_argument(
+        "--deploy",
+        choices=["ssh", "http"],
+        default=None,
+        metavar="MODE",
+        help="Deploy backend after build: ssh or http",
+    )
+
     return parser.parse_args()
 
 
@@ -1327,8 +1338,44 @@ def main() -> int:
 
     if not success:
         _print_error(result)
+        return 1
 
-    return 0 if success else 1
+    # -- Optional deployment after successful build -------------------------
+    if args.deploy:
+        _print_separator()
+        _print_info(f"Starting backend deployment via {args.deploy.upper()}...")
+        deploy_script = repo_root / "deploy.py"
+        if not deploy_script.exists():
+            _print_warn("deploy.py not found — skipping deployment.")
+        else:
+            deploy_cmd = [
+                sys.executable,
+                str(deploy_script),
+                f"-{args.deploy}",
+                "--yes",
+                "--build-version", result,
+            ]
+            if args.dry_run:
+                deploy_cmd.append("--dry-run")
+            try:
+                deploy_result = subprocess.run(
+                    deploy_cmd,
+                    cwd=str(repo_root),
+                    timeout=600,
+                )
+                if deploy_result.returncode == 0:
+                    _print_success("Backend deployment completed successfully.")
+                else:
+                    _print_warn(
+                        f"Backend deployment exited with code {deploy_result.returncode}. "
+                        "Build succeeded, but deployment had issues."
+                    )
+            except subprocess.TimeoutExpired:
+                _print_warn("Backend deployment timed out after 600s. Build succeeded.")
+            except Exception as exc:
+                _print_warn(f"Backend deployment failed: {exc}. Build succeeded.")
+
+    return 0
 
 
 if __name__ == "__main__":

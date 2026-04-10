@@ -167,10 +167,7 @@ export type WebviewMessageType =
   | 'getLogData'
   | 'getMcpServers'
   | 'updateMcpServer'
-  | 'updateAllMcpServers'
-  | 'setMcpToken'
-  | 'clearMcpToken'
-  | 'getMcpTokenStatus';
+  | 'updateAllMcpServers';
 
 export type WebviewResponseType =
   | 'configData'

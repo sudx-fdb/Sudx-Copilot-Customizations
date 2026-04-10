@@ -1,0 +1,27 @@
+[Unit]
+Description=SUDX MCP Backend Server Manager
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=notify
+User=basti
+Group=basti
+WorkingDirectory=/opt/sudx-backend
+ExecStart=/opt/sudx-backend/backend/.venv/bin/python /opt/sudx-backend/backend/start_server.py
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/bin/kill -TERM $MAINPID
+Restart=on-failure
+RestartSec=10
+WatchdogSec=60
+TimeoutStopSec=45
+KillMode=mixed
+KillSignal=SIGTERM
+FinalKillSignal=SIGKILL
+EnvironmentFile=-/opt/sudx-backend/.env
+LimitNOFILE=65536
+OOMScoreAdjust=-500
+
+[Install]
+WantedBy=multi-user.target

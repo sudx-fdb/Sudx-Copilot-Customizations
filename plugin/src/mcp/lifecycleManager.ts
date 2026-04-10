@@ -1,3 +1,4 @@
+import { exec } from 'child_process';
 import * as vscode from 'vscode';
 import { SudxLogger } from '../utils/logger';
 import { IMcpServerRuntime } from '../types';
@@ -147,18 +148,28 @@ export class McpLifecycleManager implements vscode.Disposable {
 
   // ─── Disposal ──────────────────────────────────────────────────────────
 
-  async dispose(): Promise<void> {
-    this.logger.debug(MODULE, 'Disposing lifecycle manager — stopping all managed servers');
+  /**
+   * Synchronous dispose — VS Code calls this without awaiting.
+   * Fire-and-forget server stops to avoid blocking extension deactivation.
+   * For guaranteed clean shutdown, call shutdown() first (from deactivate).
+   */
+  dispose(): void {
+    if (this._disposed) {
+      return;
+    }
+    this.logger.debug(MODULE, 'Disposing lifecycle manager — fire-and-forget stopping all managed servers');
     this._disposed = true;
 
-    for (const [name] of this.runtimes) {
-      try {
-        await this.stopServer(name);
-      } catch (err) {
-        this.logger.warn(MODULE, `Failed to stop "${name}" during disposal`, err);
+    // Fire-and-forget: stop all running servers without awaiting
+    for (const [name, runtime] of this.runtimes) {
+      if (runtime.status === 'running') {
+        this.stopServerInternal(name).catch(err => {
+          this.logger.warn(MODULE, `Failed to stop "${name}" during disposal`, err);
+        });
       }
     }
 
+    // Synchronously dispose output channels
     for (const [, channel] of this.outputChannels) {
       try {
         channel.dispose();
@@ -170,6 +181,50 @@ export class McpLifecycleManager implements vscode.Disposable {
     this.runtimes.clear();
     this.outputChannels.clear();
     this.logger.debug(MODULE, 'Lifecycle manager disposed');
+  }
+
+  /**
+   * Async shutdown — call from deactivate() before subscription cleanup
+   * to ensure all servers are properly stopped before extension exits.
+   */
+  async shutdown(): Promise<void> {
+    this.logger.debug(MODULE, 'Shutting down lifecycle manager — awaiting all server stops');
+
+    const stopPromises: Promise<void>[] = [];
+    for (const [name, runtime] of this.runtimes) {
+      if (runtime.status === 'running') {
+        stopPromises.push(
+          this.stopServerInternal(name).catch(err => {
+            this.logger.warn(MODULE, `Failed to stop "${name}" during shutdown`, err);
+          })
+        );
+      }
+    }
+
+    await Promise.all(stopPromises);
+    this.dispose();
+  }
+
+  /**
+   * Internal stop that bypasses the _disposed guard — used by dispose/shutdown.
+   */
+  private async stopServerInternal(serverName: string): Promise<void> {
+    this.logger.debug(MODULE, `Internal stop for "${serverName}"`);
+    try {
+      switch (serverName) {
+        case 'playwright':
+          await this.stopPlaywright();
+          break;
+        case 'crawl4ai':
+          await this.stopCrawl4ai();
+          break;
+        default:
+          this.logger.warn(MODULE, `No internal stop handler for: ${serverName}`);
+      }
+    } catch (err) {
+      this.logger.error(MODULE, `Internal stop failed for "${serverName}"`, err);
+      throw err;
+    }
   }
 
   // ─── Playwright ────────────────────────────────────────────────────────
@@ -395,7 +450,6 @@ export class McpLifecycleManager implements vscode.Disposable {
   private execCommand(command: string): Promise<{ success: boolean; stdout?: string; error?: string }> {
     this.logger.debug(MODULE, `Executing command: ${command}`);
     return new Promise((resolve) => {
-      const { exec } = require('child_process') as typeof import('child_process');
       const child = exec(command, { timeout: 30_000 }, (err: Error | null, stdout: string, stderr: string) => {
         if (err) {
           this.logger.debug(MODULE, `Command failed: ${command}`, { error: err.message, stderr });

@@ -72,8 +72,9 @@ export class CommandRegistry {
       try {
         await handler();
       } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
         this.logger.error(MODULE, `Command failed: ${command}`, err);
-        vscode.window.showErrorMessage(STRINGS.ERR_DEPLOY_FAILED);
+        vscode.window.showErrorMessage(`Sudx CC: Command '${command}' failed: ${message}`);
       }
     });
     this.disposables.push(disposable);

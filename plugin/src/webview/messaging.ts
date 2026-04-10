@@ -37,9 +37,6 @@ const VALID_MESSAGE_TYPES: WebviewMessageType[] = [
   'getMcpServers',
   'updateMcpServer',
   'updateAllMcpServers',
-  'setMcpToken',
-  'clearMcpToken',
-  'getMcpTokenStatus',
 ];
 
 const VALID_HOOK_NAMES = VALID_HOOKS;
@@ -378,51 +375,6 @@ export class MessageHandler {
           if (typeof payload[key] !== 'boolean') {
             return `MCP server '${key}' must be a boolean`;
           }
-        }
-        return null;
-      }
-
-      case 'setMcpToken': {
-        const payload = message.payload as { serverName?: string; token?: string } | undefined;
-        if (!payload || typeof payload !== 'object') {
-          return 'Missing payload for setMcpToken';
-        }
-        if (typeof payload.serverName !== 'string') {
-          return 'serverName must be a string';
-        }
-        if (!VALID_MCP_SERVERS.includes(payload.serverName)) {
-          return `Unknown MCP server: '${payload.serverName}'. Valid: ${VALID_MCP_SERVERS.join(', ')}`;
-        }
-        if (typeof payload.token !== 'string' || payload.token.length === 0) {
-          return 'token must be a non-empty string';
-        }
-        return null;
-      }
-
-      case 'clearMcpToken': {
-        const payload = message.payload as { serverName?: string } | undefined;
-        if (!payload || typeof payload !== 'object') {
-          return 'Missing payload for clearMcpToken';
-        }
-        if (typeof payload.serverName !== 'string') {
-          return 'serverName must be a string';
-        }
-        if (!VALID_MCP_SERVERS.includes(payload.serverName)) {
-          return `Unknown MCP server: '${payload.serverName}'. Valid: ${VALID_MCP_SERVERS.join(', ')}`;
-        }
-        return null;
-      }
-
-      case 'getMcpTokenStatus': {
-        const payload = message.payload as { serverName?: string } | undefined;
-        if (!payload || typeof payload !== 'object') {
-          return 'Missing payload for getMcpTokenStatus';
-        }
-        if (typeof payload.serverName !== 'string') {
-          return 'serverName must be a string';
-        }
-        if (!VALID_MCP_SERVERS.includes(payload.serverName)) {
-          return `Unknown MCP server: '${payload.serverName}'. Valid: ${VALID_MCP_SERVERS.join(', ')}`;
         }
         return null;
       }

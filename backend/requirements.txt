@@ -1,0 +1,24 @@
+# Backend MCP Server Manager — Python Dependencies
+# Install: pip install -r requirements.txt
+
+# Web framework & server
+fastapi>=0.100
+uvicorn[standard]>=0.20
+
+# Data validation
+pydantic>=2.0
+
+# System monitoring
+psutil>=5.9
+
+# Async file I/O
+aiofiles>=23.0
+
+# Form/file upload support
+python-multipart>=0.0.6
+
+# Server-Sent Events for real-time log streaming
+sse-starlette>=1.0
+
+# Environment file loading
+python-dotenv>=1.0

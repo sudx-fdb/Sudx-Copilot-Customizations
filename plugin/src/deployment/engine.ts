@@ -103,29 +103,36 @@ export class DeploymentEngine {
     // Create the deployment promise and store it (atomic lock acquisition)
     this.deployPromise = this.executeDeployment(config, context, dryRun);
 
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
     try {
       // Add timeout wrapper
       const result = await Promise.race([
         this.deployPromise,
-        this.createTimeoutPromise(),
+        this.createTimeoutPromise((id) => { timeoutId = id; }),
       ]);
       return result;
     } finally {
+      // Clear the timeout to prevent stale fire after successful deploy
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
       // Release the lock
       this.deployPromise = null;
     }
   }
 
   /**
-   * Creates a promise that resolves with an error result after DEPLOY_TIMEOUT_MS
+   * Creates a promise that resolves with an error result after DEPLOY_TIMEOUT_MS.
+   * Calls onTimerCreated with the timer ID so the caller can clear it.
    */
-  private createTimeoutPromise(): Promise<IDeploymentResult> {
+  private createTimeoutPromise(onTimerCreated: (id: ReturnType<typeof setTimeout>) => void): Promise<IDeploymentResult> {
     return new Promise((resolve) => {
-      setTimeout(() => {
+      const id = setTimeout(() => {
         this.logger.error(MODULE, `Deployment timed out after ${DEPLOY_TIMEOUT_MS}ms`);
         this.cancel(); // Cancel the operation
         resolve(this.makeErrorResult('Deployment timed out'));
       }, DEPLOY_TIMEOUT_MS);
+      onTimerCreated(id);
     });
   }
 
@@ -291,7 +298,7 @@ export class DeploymentEngine {
                 workspaceRoot
               );
               this.logger.debug(MODULE, 'MCP context file generated after deployment', {
-                serverCount: deployedConfig.servers ? Object.keys(deployedConfig.servers).length : 0,
+                serverCount: deployedConfig.mcpServers ? Object.keys(deployedConfig.mcpServers).length : 0,
               });
             } else {
               this.logger.debug(MODULE, 'MCP context file skipped — no deployed config found');

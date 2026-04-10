@@ -18,6 +18,9 @@ export const COMMANDS = {
   MCP_STOP: `${COMMAND_PREFIX}.mcpStop`,
   MCP_RESTART: `${COMMAND_PREFIX}.mcpRestart`,
   MCP_STATUS: `${COMMAND_PREFIX}.mcpStatus`,
+  CONNECT_BACKEND: `${COMMAND_PREFIX}.connectBackend`,
+  DISCONNECT_BACKEND: `${COMMAND_PREFIX}.disconnectBackend`,
+  SET_BACKEND_TOKEN: `${COMMAND_PREFIX}.setBackendToken`,
 } as const;
 
 // ─── Configuration ───────────────────────────────────────────────────────────
@@ -34,6 +37,14 @@ export const CONFIG_KEYS = {
   MCP_SERVERS: 'mcpServers',
   MCP_ALLOW_LOCALHOST: 'mcpAllowLocalhost',
   MCP_HEALTH_CHECK_INTERVAL: 'mcpHealthCheckInterval',
+  VPS_BACKEND_URL: 'vpsBackendUrl',
+  VPS_BACKEND_TOKEN: 'vpsBackendToken',
+  AUTO_CONNECT_TO_BACKEND: 'autoConnectToBackend',
+  STORE_TOKEN_SECURELY: 'storeTokenSecurely',
+  DEBUG_PANEL_EVENT_BUFFER_SIZE: 'debugPanelEventBufferSize',
+  DEBUG_PANEL_REFRESH_RATE: 'debugPanelRefreshRate',
+  LOGGER_CLIENT_RECONNECT_MAX_DELAY: 'loggerClientReconnectMaxDelay',
+  MCP_VALIDATE_ON_DEPLOY: 'mcpValidateOnDeploy',
 } as const;
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
@@ -59,7 +70,7 @@ export const DEFAULT_MCP_SERVERS: IMcpServerConfig = {
 export const VALID_MCP_SERVERS: string[] = Object.keys(DEFAULT_MCP_SERVERS);
 
 export const DEFAULT_DEPLOY_PATH = '.github';
-export const DEFAULT_LOG_LEVEL: LogLevel = LogLevel.Warn;
+export const DEFAULT_LOG_LEVEL: LogLevel = LogLevel.Info;
 export const DEFAULT_AUTO_ACTIVATE_AGENT = true;
 export const DEFAULT_SHOW_STATUS_BAR = true;
 

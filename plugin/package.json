@@ -2,7 +2,7 @@
   "name": "sudx-copilot-customizations",
   "displayName": "Sudx Copilot Customizations",
   "description": "Deploy and manage Copilot AI agent customization files for your workspace",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "publisher": "sudx",
   "engines": {
     "vscode": "^1.85.0"
@@ -65,6 +65,18 @@
         "command": "sudx-ai.mcpStatus",
         "title": "Sudx CC: MCP Server Status",
         "enablement": "workspaceFolderCount != 0"
+      },
+      {
+        "command": "sudx-ai.connectBackend",
+        "title": "Sudx CC: Connect to Backend SSE"
+      },
+      {
+        "command": "sudx-ai.disconnectBackend",
+        "title": "Sudx CC: Disconnect from Backend SSE"
+      },
+      {
+        "command": "sudx-ai.setBackendToken",
+        "title": "Sudx CC: Set Backend Token"
       }
     ],
     "configuration": [
@@ -212,6 +224,54 @@
             "default": false,
             "markdownDescription": "Allow MCP tools to access `localhost` and `127.0.0.1`. **Disabled by default** for SSRF prevention. Enable only for local development testing.",
             "order": 13
+          },
+          "sudx-ai.vpsBackendUrl": {
+            "type": "string",
+            "default": "https://rtnc.sudx.de:8420",
+            "markdownDescription": "URL of the VPS Backend MCP Manager API. Used to connect to VPS-hosted MCP servers.",
+            "order": 14
+          },
+          "sudx-ai.vpsBackendToken": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "Bearer token for VPS Backend MCP Manager authentication. Keep this secret.",
+            "order": 15
+          },
+          "sudx-ai.autoConnectToBackend": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Automatically connect to the VPS Backend SSE event stream on extension activation when `vpsBackendUrl` is configured.",
+            "order": 16
+          },
+          "sudx-ai.storeTokenSecurely": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "Use VS Code **SecretStorage** for backend token storage. When enabled, the token from `vpsBackendToken` is migrated to SecretStorage and the setting is cleared.",
+            "order": 17
+          },
+          "sudx-ai.debugPanelEventBufferSize": {
+            "type": "number",
+            "default": 100,
+            "minimum": 10,
+            "maximum": 1000,
+            "markdownDescription": "Maximum number of MCP events buffered when the Debug Panel is closed. Events are replayed when the panel opens.",
+            "order": 18
+          },
+          "sudx-ai.debugPanelRefreshRate": {
+            "type": "number",
+            "default": 100,
+            "minimum": 50,
+            "maximum": 1000,
+            "markdownDescription": "Minimum milliseconds between webview updates. Lower values give smoother updates but use more CPU.",
+            "order": 19
+          },
+          "sudx-ai.loggerClientReconnectMaxDelay": {
+            "type": "number",
+            "default": 60,
+            "minimum": 5,
+            "maximum": 300,
+            "markdownDescription": "Maximum SSE reconnection delay in seconds. The client uses exponential backoff up to this limit.",
+            "order": 20
           }
         }
       },

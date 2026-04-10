@@ -242,6 +242,92 @@ export class SudxSettings {
     return value;
   }
 
+  getVpsBackendUrl(): string {
+    this.logger.debug(MODULE, 'Getting vpsBackendUrl');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.VPS_BACKEND_URL);
+    if (typeof value !== 'string') {
+      return 'https://rtnc.sudx.de:8420';
+    }
+    return value;
+  }
+
+  getVpsBackendToken(): string {
+    this.logger.debug(MODULE, 'Getting vpsBackendToken');
+    const storeSecurely = this.getStoreTokenSecurely();
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.VPS_BACKEND_TOKEN);
+    if (typeof value === 'string' && value && storeSecurely) {
+      this.logger.warn(MODULE, 'Plaintext token in settings is insecure. Use "Set Backend Token" command.');
+      return '';
+    }
+    if (typeof value !== 'string') {
+      return '';
+    }
+    return value;
+  }
+
+  getAutoConnectToBackend(): boolean {
+    this.logger.debug(MODULE, 'Getting autoConnectToBackend');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.AUTO_CONNECT_TO_BACKEND);
+    if (typeof value !== 'boolean') {
+      return true;
+    }
+    return value;
+  }
+
+  getStoreTokenSecurely(): boolean {
+    this.logger.debug(MODULE, 'Getting storeTokenSecurely');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.STORE_TOKEN_SECURELY);
+    if (typeof value !== 'boolean') {
+      return true;
+    }
+    return value;
+  }
+
+  getDebugPanelEventBufferSize(): number {
+    this.logger.debug(MODULE, 'Getting debugPanelEventBufferSize');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.DEBUG_PANEL_EVENT_BUFFER_SIZE);
+    if (typeof value !== 'number' || value < 10 || value > 1000) {
+      if (value !== undefined) {
+        this.logger.warn(MODULE, 'Invalid debugPanelEventBufferSize — using default 100', { value });
+      }
+      return 100;
+    }
+    return value;
+  }
+
+  getDebugPanelRefreshRate(): number {
+    this.logger.debug(MODULE, 'Getting debugPanelRefreshRate');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.DEBUG_PANEL_REFRESH_RATE);
+    if (typeof value !== 'number' || value < 50 || value > 1000) {
+      if (value !== undefined) {
+        this.logger.warn(MODULE, 'Invalid debugPanelRefreshRate — using default 100', { value });
+      }
+      return 100;
+    }
+    return value;
+  }
+
+  getLoggerClientReconnectMaxDelay(): number {
+    this.logger.debug(MODULE, 'Getting loggerClientReconnectMaxDelay');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.LOGGER_CLIENT_RECONNECT_MAX_DELAY);
+    if (typeof value !== 'number' || value < 5 || value > 300) {
+      if (value !== undefined) {
+        this.logger.warn(MODULE, 'Invalid loggerClientReconnectMaxDelay — using default 60', { value });
+      }
+      return 60;
+    }
+    return value;
+  }
+
+  getMcpValidateOnDeploy(): boolean {
+    this.logger.debug(MODULE, 'Getting mcpValidateOnDeploy');
+    const value = this.getConfig().get<unknown>(CONFIG_KEYS.MCP_VALIDATE_ON_DEPLOY);
+    if (typeof value !== 'boolean') {
+      return true;
+    }
+    return value;
+  }
+
   getUiSettings(): IUiSettings {
     this.logger.debug(MODULE, 'Getting UI settings (batch read)');
     const config = this.getConfig();

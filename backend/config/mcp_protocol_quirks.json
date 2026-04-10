@@ -1,0 +1,219 @@
+{
+  "version": 1,
+  "description": "Per-MCP protocol quirks and transport-specific interception strategies",
+  "transport_buckets": {
+    "stdio_direct": {
+      "description": "stdio transport via direct subprocess stdout/stderr capture using McpProcessProxy",
+      "mcps": ["PentestThinkingMCP", "pentest-mcp-server", "GhidraMCP", "shodan-mcp", "nessus-mcp-server", "Wazuh-MCP-Server", "defense-mcp-server", "threat-hunting-mcp-server", "Volatility-MCP-Server", "CABTA", "MISP-MCP-SERVER"]
+    },
+    "stdio_docker": {
+      "description": "stdio transport via Docker container, use docker logs --follow --timestamps for I/O capture",
+      "mcps": ["pentest-ai", "autopentest-ai"]
+    },
+    "sse_http": {
+      "description": "SSE/HTTP transport, intercept at proxy level in internal_api /mcp/{name}/* route, NOT process stdout",
+      "mcps": ["burp-suite-mcp", "crawl4ai"]
+    }
+  },
+  "mcps": {
+    "pentest-ai": {
+      "transport": "stdio_docker",
+      "install_method": "docker",
+      "tool_count": 53,
+      "quirks": [
+        "Large tool catalog (53 active tools) — tools/list response can be >50KB",
+        "Some tools produce streaming partial output (nmap scan progress)",
+        "Docker container stdout mixes JSON-RPC with debug prints — filter non-JSON lines",
+        "Tool responses may include base64-encoded binary data (screenshots, pcap snippets)"
+      ],
+      "large_response_tools": ["nmap_scan", "vulnerability_scan", "network_discovery"],
+      "destructive_tools": [],
+      "tags": ["pentest", "red-team"]
+    },
+    "autopentest-ai": {
+      "transport": "stdio_docker",
+      "install_method": "docker",
+      "quirks": [
+        "WSTG test results can be very large (full HTML report in response)",
+        "Coverage reports use custom JSON format with nested test case arrays",
+        "Knowledge graph responses contain graph serialization (nodes + edges)",
+        "Docker container — use docker logs --follow for capture"
+      ],
+      "large_response_tools": ["run_wstg_tests", "generate_coverage_report", "query_knowledge_graph"],
+      "destructive_tools": [],
+      "tags": ["pentest", "red-team"]
+    },
+    "PentestThinkingMCP": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "Attack path algorithm output contains beam search tree structures (deeply nested JSON)",
+        "MCTS node data includes scoring vectors with floating-point arrays",
+        "Responses can include ASCII art diagrams in text content",
+        "Processing time for path computation can exceed 60s — adjust timeout"
+      ],
+      "large_response_tools": ["compute_attack_path", "run_mcts_analysis"],
+      "destructive_tools": [],
+      "tags": ["pentest", "red-team"]
+    },
+    "pentest-mcp-server": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "Session management — tool calls maintain stateful sessions across requests",
+        "Command output can stream partial results (shell command execution)",
+        "Resource status responses include live connection metadata",
+        "Large streaming output from long-running commands — be prepared for multi-MB responses"
+      ],
+      "large_response_tools": ["execute_command", "run_exploit"],
+      "destructive_tools": ["execute_command"],
+      "tags": ["pentest", "red-team"]
+    },
+    "GhidraMCP": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "Decompiled code responses can be very large (full function C pseudocode)",
+        "Function list for large binaries can contain 10000+ entries",
+        "Xref graph format uses custom edge/node JSON serialization",
+        "String extraction returns raw binary strings — may contain non-UTF8 data"
+      ],
+      "large_response_tools": ["decompile_function", "list_functions", "get_xrefs", "extract_strings"],
+      "destructive_tools": [],
+      "tags": ["analysis", "purple"]
+    },
+    "shodan-mcp": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "Generally small payloads — search results, host details, DNS",
+        "Rate limited by Shodan API — tool errors may be rate limit responses",
+        "API key required — watch for key exposure in debug logs"
+      ],
+      "large_response_tools": [],
+      "destructive_tools": [],
+      "sensitive_fields": ["api_key"],
+      "tags": ["intel", "purple"]
+    },
+    "burp-suite-mcp": {
+      "transport": "sse_http",
+      "install_method": "external",
+      "quirks": [
+        "SSE transport — intercept at HTTP proxy level, NOT process stdout",
+        "Scan results use Burp-specific finding schema with severity levels",
+        "May produce large scan result sets for comprehensive scans",
+        "Connection to Burp Suite API requires separate authentication"
+      ],
+      "large_response_tools": ["get_scan_results", "get_findings"],
+      "destructive_tools": [],
+      "tags": ["pentest", "red-team"]
+    },
+    "nessus-mcp-server": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "Vulnerability results follow Nessus plugin output format",
+        "Scan status responses include progress percentage — not standard MCP notifications",
+        "Report format can be very large (full PDF-equivalent JSON)",
+        "Requires Nessus API connection — watch for credential exposure"
+      ],
+      "large_response_tools": ["get_scan_report", "list_vulnerabilities"],
+      "destructive_tools": [],
+      "sensitive_fields": ["access_key", "secret_key"],
+      "tags": ["pentest", "red-team"]
+    },
+    "Wazuh-MCP-Server": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "DESTRUCTIVE tools: block_ip, isolate_host, kill_process — require enhanced logging",
+        "Alert format follows Wazuh JSON alert schema (nested rule/decoder/agent)",
+        "Agent status includes real-time connection state",
+        "Destructive action confirmation may use non-standard response format"
+      ],
+      "large_response_tools": ["get_alerts", "get_agent_status"],
+      "destructive_tools": ["block_ip", "isolate_host", "kill_process"],
+      "tags": ["defense", "blue-team"]
+    },
+    "defense-mcp-server": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "DESTRUCTIVE tools: firewall_iptables, firewall_nftables — require sudo",
+        "Needs privilege escalation — log sudo usage events",
+        "Hardening results include compliance check scores",
+        "System status responses contain real-time system metrics"
+      ],
+      "large_response_tools": ["compliance_check", "full_hardening_report"],
+      "destructive_tools": ["firewall_iptables", "firewall_nftables", "apply_hardening"],
+      "tags": ["defense", "blue-team"]
+    },
+    "threat-hunting-mcp-server": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "Hypothesis format uses structured threat hunting methodology JSON",
+        "Splunk query results can be very large (multiple MB of log entries)",
+        "HEARTH database format uses custom schema for hunting artifacts",
+        "Hunt reports combine multiple data sources"
+      ],
+      "large_response_tools": ["run_splunk_query", "generate_hunt_report"],
+      "destructive_tools": [],
+      "tags": ["intel", "purple"]
+    },
+    "Volatility-MCP-Server": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "POTENTIALLY VERY LARGE output — memory dump analysis can produce multi-MB responses",
+        "Process list format includes virtual/physical memory addresses",
+        "Network connection format maps to Volatility plugin output schema",
+        "Registry and malfind results can be binary-heavy — may include hex dumps",
+        "Output preview truncation CRITICAL for this MCP"
+      ],
+      "large_response_tools": ["pslist", "netscan", "malfind", "hivelist", "dumpfiles"],
+      "destructive_tools": [],
+      "tags": ["analysis", "purple"]
+    },
+    "CABTA": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "Analysis report format combines multiple analysis modules",
+        "YARA match results include matched rule details and offset data",
+        "TI enrichment responses aggregate from multiple threat intel sources",
+        "Sandbox results can include behavioral analysis traces (large)"
+      ],
+      "large_response_tools": ["run_analysis", "sandbox_execute", "yara_scan"],
+      "destructive_tools": [],
+      "tags": ["analysis", "purple"]
+    },
+    "MISP-MCP-SERVER": {
+      "transport": "stdio_direct",
+      "install_method": "pip",
+      "quirks": [
+        "Event format follows MISP JSON event schema (complex nested structure)",
+        "Attribute format includes MISP-specific type taxonomy",
+        "Correlation results can span multiple events and organizations",
+        "Feed sync operations can transfer large datasets"
+      ],
+      "large_response_tools": ["get_event", "search_attributes", "sync_feeds"],
+      "destructive_tools": [],
+      "sensitive_fields": ["auth_key"],
+      "tags": ["intel", "purple"]
+    },
+    "crawl4ai": {
+      "transport": "sse_http",
+      "install_method": "docker",
+      "quirks": [
+        "SSE transport via HTTP — not stdio, intercept at proxy level",
+        "Deep crawl responses can be very large (multiple pages of content)",
+        "Structured extraction responses depend on user-provided JSON schema",
+        "Server must be running before MCP calls — not auto-started"
+      ],
+      "large_response_tools": ["crawl4ai_deep_crawl", "crawl4ai_extract", "crawl4ai_crawl"],
+      "destructive_tools": [],
+      "tags": ["crawl", "utility"]
+    }
+  }
+}

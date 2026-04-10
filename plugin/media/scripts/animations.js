@@ -478,7 +478,8 @@
       _entranceObserver = new IntersectionObserver(function (entries) {
         for (var j = 0; j < entries.length; j++) {
           if (entries[j].isIntersecting) {
-            entries[j].target.classList.add(_entranceAnimClass);
+            var cls = entries[j].target.getAttribute('data-entrance-anim') || _entranceAnimClass;
+            entries[j].target.classList.add(cls);
             _entranceObserver.unobserve(entries[j].target);
             _observedCount--;
             if (_observedCount <= 0) {
@@ -495,10 +496,11 @@
     var targets = document.querySelectorAll(selector);
     if (_observedCount + targets.length > OBSERVE_ENTRANCE_LIMIT) {
       log('observeEntrance', 'LIMIT exceeded (' + (_observedCount + targets.length) + '>' + OBSERVE_ENTRANCE_LIMIT + ') → instant reveal');
-      for (var m = 0; m < targets.length; m++) { targets[m].classList.add(_entranceAnimClass); }
+      for (var m = 0; m < targets.length; m++) { targets[m].classList.add(animationClass); }
       return;
     }
     for (var k = 0; k < targets.length; k++) {
+      targets[k].setAttribute('data-entrance-anim', animationClass);
       _entranceObserver.observe(targets[k]);
       _observedCount++;
     }

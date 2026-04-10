@@ -1014,61 +1014,6 @@
   50% { opacity: 0.5; }
 }
 
-/* ─── MCP Token Input ──────────────────────────────────────────────────────── */
-
-.mcp-token-input {
-  background: var(--bg-secondary, rgba(0, 0, 0, 0.3));
-  border: 1px solid var(--green-primary);
-  border-radius: 3px;
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  padding: var(--space-xs) var(--space-sm);
-  width: 100%;
-  max-width: 280px;
-  -webkit-text-security: disc;
-}
-
-.mcp-token-input:focus {
-  outline: none;
-  box-shadow: 0 0 4px rgba(0, 255, 65, 0.3);
-}
-
-.mcp-token-btn {
-  background: none;
-  border: var(--border-glow);
-  border-radius: 3px;
-  color: var(--green-primary);
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  padding: 2px var(--space-sm);
-  cursor: pointer;
-  transition: all var(--duration-fast);
-}
-
-.mcp-token-btn:hover {
-  text-shadow: var(--glow-text);
-  border-color: var(--green-bright, #00ff41);
-}
-
-/* ─── MCP Token Status ─────────────────────────────────────────────────────── */
-
-.mcp-token-status {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-xs);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.mcp-token-status--set {
-  color: var(--green-primary);
-}
-
-.mcp-token-status--not-set {
-  color: var(--text-dim);
-}
-
 /* ─── MCP Log Entry ────────────────────────────────────────────────────────── */
 
 .mcp-log-entry {
